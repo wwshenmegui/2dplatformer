@@ -1,0 +1,88 @@
+[gd_scene load_steps=9 format=3 uid="uid://c1pun0vaapg5b"]
+
+[ext_resource type="Texture2D" uid="uid://dcpfbijijd3w" path="res://assets/textures/slime_green.png" id="1_7p1mj"]
+[ext_resource type="Script" uid="uid://bjdt7p633bu3p" path="res://scripts/enemy.gd" id="1_md0e3"]
+
+[sub_resource type="Animation" id="Animation_4ra3w"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [4]
+}
+
+[sub_resource type="Animation" id="Animation_5uy6h"]
+resource_name = "jaw"
+length = 2.2
+loop_mode = 1
+step = 0.033
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.45, 0.9, 1.35, 1.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 1,
+"values": [4, 5, 6, 7, 4]
+}
+
+[sub_resource type="Animation" id="Animation_md0e3"]
+resource_name = "move"
+length = 2.0
+loop_mode = 1
+step = 0.033
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_5uy6h"]
+_data = {
+&"RESET": SubResource("Animation_4ra3w"),
+&"jaw": SubResource("Animation_5uy6h"),
+&"move": SubResource("Animation_md0e3")
+}
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7p1mj"]
+size = Vector2(23, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_md0e3"]
+
+[node name="Enemy" type="CharacterBody2D"]
+collision_layer = 16
+script = ExtResource("1_md0e3")
+
+[node name="EdgeCheck" type="RayCast2D" parent="."]
+position = Vector2(0, -2)
+target_position = Vector2(0, 30)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_5uy6h")
+}
+autoplay = "jaw"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -22)
+scale = Vector2(2, 1.75)
+texture = ExtResource("1_7p1mj")
+hframes = 4
+vframes = 3
+frame = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -12)
+shape = SubResource("RectangleShape2D_7p1mj")
+
+[node name="Area2D" type="Area2D" parent="."]
+collision_layer = 16
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("RectangleShape2D_md0e3")
