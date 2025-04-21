@@ -1,11 +1,13 @@
 extends CharacterBody2D
 
-signal kill_player(body)
+signal damage_player(body)
 
 var speed = 100
 var direction = -1
 var gravity = 30
 var is_on_edge = false
+
+@export var damage = 1
 
 @onready var edge_check = $EdgeCheck
 @onready var enemy_body = $Area2D
@@ -52,4 +54,6 @@ func check_direction():
 
 
 func _on_area_2d_body_entered(body: Node2D) -> void:
-	kill_player.emit()
+	if body.name == "Player" and body.has_method("take_damage"):
+		body.take_damage(damage)
+		damage_player.emit()

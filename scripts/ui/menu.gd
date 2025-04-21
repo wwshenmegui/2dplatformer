@@ -1,18 +1,21 @@
 extends Control
 
-@onready var restart_button = $RestartButton
+@onready var start_button = $StartButton
 @onready var exit_button = $ExitButton
 
 func _ready():
+	get_tree().paused = false
 	# Set focus to start button when scene loads
-	restart_button.grab_focus()
+	start_button.grab_focus()
 	
 	# Connect button signals to their respective functions
-	restart_button.pressed.connect(_on_restart_button_pressed)
+	start_button.pressed.connect(_on_start_button_pressed)
 	exit_button.pressed.connect(_on_exit_button_pressed)
 
-func _on_restart_button_pressed() -> void:
+func _on_start_button_pressed():
+	# Change to your first game level scene
 	get_tree().change_scene_to_file("res://scenes/levels/level.tscn")
 	
-func _on_exit_button_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+func _on_exit_button_pressed():
+	# Quit the game
+	get_tree().quit()

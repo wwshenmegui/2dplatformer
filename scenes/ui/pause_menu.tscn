@@ -1,0 +1,47 @@
+[gd_scene load_steps=4 format=3 uid="uid://bega1arqmqmcw"]
+
+[ext_resource type="Script" uid="uid://rtfljx1vg2gs" path="res://scripts/ui/pause_menu.gd" id="1_6tw0m"]
+[ext_resource type="FontFile" uid="uid://b4p23mjjbktc0" path="res://assets/fonts/PixelOperator8.ttf" id="2_0lmf7"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_f6eus"]
+font = ExtResource("2_0lmf7")
+font_size = 48
+
+[node name="PauseMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_6tw0m")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.54, 0.54, 0.54, 0.231373)
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = 326.0
+offset_top = 152.0
+offset_right = 788.0
+offset_bottom = 385.0
+text = "Paused"
+label_settings = SubResource("LabelSettings_f6eus")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 425.0
+offset_top = 317.0
+offset_right = 698.0
+offset_bottom = 390.0
+
+[node name="ResumeButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Resume"
+
+[node name="QuitButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Quit"

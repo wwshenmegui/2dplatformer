@@ -1,13 +1,26 @@
-[gd_scene load_steps=2 format=3 uid="uid://cdgnpg0ld1osn"]
+[gd_scene load_steps=6 format=3 uid="uid://cdgnpg0ld1osn"]
 
-[ext_resource type="PackedScene" uid="uid://b6vcwmuvhgin2" path="res://scenes/ui/win_scene.tscn" id="1_3eqaf"]
+[ext_resource type="PackedScene" uid="uid://b6vcwmuvhgin2" path="res://scenes/ui/win_screen.tscn" id="1_3eqaf"]
+[ext_resource type="PackedScene" uid="uid://cu5pn8a3v8p7b" path="res://scenes/ui/hp_hud.tscn" id="2_0d208"]
+[ext_resource type="PackedScene" uid="uid://bdfswh1xcpbho" path="res://scenes/ui/lose_screen.tscn" id="2_nhiu8"]
+[ext_resource type="Script" uid="uid://d3g2hd7ciiop0" path="res://scripts/ui/lose_screen.gd" id="3_mvntu"]
+[ext_resource type="PackedScene" uid="uid://bega1arqmqmcw" path="res://scenes/ui/pause_menu.tscn" id="5_d4ycy"]
 
-[node name="CanvasLayer" type="CanvasLayer"]
+[node name="UILayer" type="CanvasLayer"]
 
-[node name="WinScene" parent="." instance=ExtResource("1_3eqaf")]
+[node name="WinScreen" parent="." instance=ExtResource("1_3eqaf")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="LoseScreen" parent="." instance=ExtResource("2_nhiu8")]
+visible = false
+script = ExtResource("3_mvntu")
+
+[node name="HpHud" parent="." instance=ExtResource("2_0d208")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("5_d4ycy")]
+visible = false
