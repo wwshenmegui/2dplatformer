@@ -42,12 +42,10 @@ func _process(delta):
 
 func _on_exit_reached():
 	if is_final_level:
-		player.active = false
 		win_screen.visible = true
 		get_tree().paused = true
 		
 func _on_player_died():
-	player.active = false
 	lose_screen.visible = true
 	get_tree().paused = true
 	
@@ -68,7 +66,8 @@ func _on_deathzone_body_entered() -> void:
 	reset_player()
 	
 func _on_enemy_damage_player() -> void:
-	reset_player()
+	# TODO repel player in the future
+	pass
 	
 func reset_player():
 	if not player.is_dead:	

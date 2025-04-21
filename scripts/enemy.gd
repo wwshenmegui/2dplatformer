@@ -54,6 +54,6 @@ func check_direction():
 
 
 func _on_area_2d_body_entered(body: Node2D) -> void:
-	if body.name == "Player" and body.has_method("take_damage"):
-		body.take_damage(damage)
+	if body.name == "Player" and body.has_method("take_damage") and not body.is_invincible:
+		body.take_damage(damage, global_position)
 		damage_player.emit()
