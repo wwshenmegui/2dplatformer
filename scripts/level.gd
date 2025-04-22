@@ -9,6 +9,7 @@ extends Node2D
 @onready var lose_screen = $UILayer/LoseScreen
 @onready var deathzone = $Deathzone
 @onready var pause_menu = $UILayer/PauseMenu
+@onready var backpack_ui = $UILayer/BackpackUI
 
 var is_paused = false
 
@@ -28,12 +29,19 @@ func _ready():
 	deathzone.connect("entered_deathzone", _on_deathzone_body_entered)
 		
 	# Connect the exit signal
-	# You need to get a reference to your exit node
-	# Assuming the exit is named "Exit" in your scene:
 	exit.connect("exit_reached", _on_exit_reached)
 	
-	# Hide pause menu at start
+	# Connect collectible signals
+	var collectibles = get_tree().get_nodes_in_group("Collectibles")
+	for collectible in collectibles:
+		collectible.connect("collected", _on_collectible_collected)
+	
+	# Setup backpack UI
+	backpack_ui.set_inventory(player.inventory)
+	
+	# Hide pause menu and backpack UI at start
 	pause_menu.visible = false
+	backpack_ui.visible = false
 	
 func _process(delta):
 	# Check for pause input
@@ -50,6 +58,10 @@ func _on_player_died():
 	get_tree().paused = true
 	
 func toggle_pause():
+	# Don't pause if inventory is open
+	if backpack_ui.visible:
+		return
+		
 	is_paused = !is_paused
 	
 	if is_paused:
@@ -70,6 +82,10 @@ func _on_enemy_damage_player() -> void:
 	pass
 	
 func reset_player():
-	if not player.is_dead:	
+	if not player.is_dead:
 		player.velocity = Vector2.ZERO
 		player.global_position = $Respawn_Point.global_position
+
+# New function to handle collectible collection
+func _on_collectible_collected(item_id):
+	player.collect_item(item_id)

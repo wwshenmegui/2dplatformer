@@ -24,6 +24,9 @@ var knockback_force = Vector2(300, -200)  # Horizontal and vertical force
 var is_being_knocked_back = false
 var knockback_direction = Vector2.ZERO
 
+# Inventory system
+var inventory = Inventory.new()
+
 @onready var animated_sprite = $AnimatedSprite2D
 
 func _ready() -> void:
@@ -129,4 +132,7 @@ func die() -> void:
 	# Notify level about player death
 	player_died.emit()
 	
-	
+# New methods for inventory handling
+func collect_item(item_id: String) -> void:
+	inventory.add_item(item_id)
+	print("Collected item: ", item_id)

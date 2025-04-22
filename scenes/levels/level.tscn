@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=4 uid="uid://cg7gcjm5l4rsv"]
+[gd_scene load_steps=13 format=4 uid="uid://cg7gcjm5l4rsv"]
 
 [ext_resource type="Script" uid="uid://cjcecejywu47c" path="res://scripts/level.gd" id="1_d4w6o"]
 [ext_resource type="PackedScene" uid="uid://ccpaee58xeetu" path="res://scenes/player.tscn" id="2_mbbpy"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://dun2jr5sadvhp" path="res://scenes/deathzone.tscn" id="5_icy5c"]
 [ext_resource type="Texture2D" uid="uid://c3jpio8catrsk" path="res://assets/textures/platforms.png" id="5_rmjfq"]
 [ext_resource type="PackedScene" uid="uid://c1pun0vaapg5b" path="res://scenes/enemy.tscn" id="6_7pb6i"]
+[ext_resource type="PackedScene" uid="uid://gm15uvrhdn2e" path="res://scenes/collectible.tscn" id="9_icy5c"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_71j4m"]
 resource_name = "terrain"
@@ -238,3 +239,6 @@ tile_set = SubResource("TileSet_qfnet")
 
 [node name="Enemy" parent="." instance=ExtResource("6_7pb6i")]
 position = Vector2(387, 337)
+
+[node name="Collectible" parent="." instance=ExtResource("9_icy5c")]
+position = Vector2(-64, 533)
