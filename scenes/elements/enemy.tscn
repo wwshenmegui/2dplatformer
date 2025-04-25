@@ -1,7 +1,7 @@
 [gd_scene load_steps=9 format=3 uid="uid://c1pun0vaapg5b"]
 
-[ext_resource type="Texture2D" uid="uid://dcpfbijijd3w" path="res://assets/textures/slime_green.png" id="1_7p1mj"]
-[ext_resource type="Script" uid="uid://bjdt7p633bu3p" path="res://scripts/enemy.gd" id="1_md0e3"]
+[ext_resource type="Texture2D" uid="uid://dtn6bgkii1i6h" path="res://assets/textures/slime_green.png" id="1_7p1mj"]
+[ext_resource type="Script" uid="uid://bjdt7p633bu3p" path="res://scripts/elements/enemy.gd" id="1_md0e3"]
 
 [sub_resource type="Animation" id="Animation_4ra3w"]
 length = 0.001
@@ -50,7 +50,7 @@ _data = {
 }
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_7p1mj"]
-size = Vector2(23, 20)
+size = Vector2(46, 39)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_md0e3"]
 
@@ -69,15 +69,15 @@ libraries = {
 autoplay = "jaw"
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(0, -22)
-scale = Vector2(2, 1.75)
+position = Vector2(-0.999998, -41)
+scale = Vector2(3.54167, 3.375)
 texture = ExtResource("1_7p1mj")
 hframes = 4
 vframes = 3
 frame = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -12)
+position = Vector2(-1, -21.5)
 shape = SubResource("RectangleShape2D_7p1mj")
 
 [node name="Area2D" type="Area2D" parent="."]

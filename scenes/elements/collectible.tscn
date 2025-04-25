@@ -1,10 +1,10 @@
 [gd_scene load_steps=4 format=3 uid="uid://gm15uvrhdn2e"]
 
-[ext_resource type="Script" uid="uid://dblib53f5q5sw" path="res://scripts/collectible.gd" id="1_bkg8t"]
-[ext_resource type="Texture2D" uid="uid://duuypk2yeetd7" path="res://assets/textures/fruit.png" id="2_1pg6c"]
+[ext_resource type="Script" uid="uid://dblib53f5q5sw" path="res://scripts/elements/collectible.gd" id="1_bkg8t"]
+[ext_resource type="Texture2D" uid="uid://dyiaphp5ht58y" path="res://assets/textures/fruit.png" id="2_1pg6c"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_61c27"]
-radius = 12.6491
+radius = 27.0185
 
 [node name="Collectible" type="Area2D"]
 collision_layer = 32
@@ -12,12 +12,12 @@ collision_mask = 2
 script = ExtResource("1_bkg8t")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(2.38419e-07, -2)
-scale = Vector2(2.03125, 1.875)
+position = Vector2(3.8147e-06, -27)
+scale = Vector2(4.26562, 3.75)
 texture = ExtResource("2_1pg6c")
 hframes = 4
 vframes = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(-1, -2)
+position = Vector2(0, -27)
 shape = SubResource("CircleShape2D_61c27")

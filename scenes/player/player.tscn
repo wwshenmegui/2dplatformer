@@ -1,7 +1,8 @@
-[gd_scene load_steps=30 format=3 uid="uid://ccpaee58xeetu"]
+[gd_scene load_steps=31 format=3 uid="uid://ccpaee58xeetu"]
 
-[ext_resource type="Script" uid="uid://bg0xfibedidhw" path="res://scripts/player.gd" id="1_g2els"]
-[ext_resource type="Texture2D" uid="uid://xka02b4yonri" path="res://assets/textures/knight.png" id="2_g2els"]
+[ext_resource type="Script" uid="uid://bg0xfibedidhw" path="res://scripts/player/player.gd" id="1_g2els"]
+[ext_resource type="Texture2D" uid="uid://c6trchpswjup2" path="res://assets/textures/knight.png" id="2_g2els"]
+[ext_resource type="PackedScene" uid="uid://bn6lsgwcm3eki" path="res://scenes/player/player_attack.tscn" id="3_gmlin"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4ni07"]
 atlas = ExtResource("2_g2els")
@@ -205,7 +206,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3vyb7"]
-size = Vector2(19, 29)
+size = Vector2(61, 86)
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
@@ -213,15 +214,19 @@ collision_mask = 13
 script = ExtResource("1_g2els")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(1, -25)
-scale = Vector2(1.73438, 1.59375)
+position = Vector2(3.8147e-06, -72)
+scale = Vector2(4.96094, 4.26563)
 sprite_frames = SubResource("SpriteFrames_tuyoq")
 animation = &"die"
 autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0.5, -21.5)
+position = Vector2(-3.5, -61)
 shape = SubResource("RectangleShape2D_3vyb7")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 limit_bottom = 600
+
+[node name="PlayerAttack" parent="." instance=ExtResource("3_gmlin")]
+position = Vector2(29, -55)
+scale = Vector2(0.29749, -0.313341)

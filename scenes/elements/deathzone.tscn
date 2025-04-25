@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3 uid="uid://dun2jr5sadvhp"]
 
-[ext_resource type="Script" uid="uid://k4q8f805xd5j" path="res://deathzone.gd" id="1_g3cgl"]
+[ext_resource type="Script" uid="uid://k4q8f805xd5j" path="res://scripts/elements/deathzone.gd" id="1_g3cgl"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_k0juu"]
-size = Vector2(1306.25, 28)
+size = Vector2(4231, 114)
 
 [node name="Deathzone" type="Area2D"]
 collision_layer = 4
@@ -11,5 +11,5 @@ collision_mask = 2
 script = ExtResource("1_g3cgl")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(513.125, 631)
+position = Vector2(1975.5, 674)
 shape = SubResource("RectangleShape2D_k0juu")

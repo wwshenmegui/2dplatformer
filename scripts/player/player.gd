@@ -5,9 +5,9 @@ class_name Player
 signal player_died
 
 # movement variables
-@export var speed = 300
+@export var speed = 500
 @export var gravity = 30
-@export var jumpforce = 600
+@export var jumpforce = 700
 
 @export var max_hp = 3
 var current_hp = max_hp
@@ -29,10 +29,22 @@ var inventory = Inventory.new()
 
 @onready var animated_sprite = $AnimatedSprite2D
 
+# Attack
+@export var can_attack = true
+@export var attack_cooldown = 0.5
+var is_attack_on_cooldown = false
+
+@onready var attack_area = $PlayerAttack
+
 func _ready() -> void:
 	add_to_group("Player")
 	
-	# Your existing code...
+	# Set this player as the inventory owner
+	inventory.set_owner(self)
+	
+	# Connect to inventory item_used signal
+	inventory.item_used.connect(_on_item_used)
+	
 	current_hp = max_hp
 	# Notify the HUD to update
 	update_hp_display()
@@ -61,6 +73,10 @@ func _physics_process(delta: float) -> void:
 	# Check if knockback should end
 	if is_being_knocked_back and is_on_floor() and velocity.y >= 0:
 		is_being_knocked_back = false
+		
+	# Handle attack input
+	if can_attack and Input.is_action_just_pressed("attack") and not is_attack_on_cooldown:
+		attack()
 	
 func update_animation(direction):
 	if direction != 0:
@@ -118,7 +134,13 @@ func start_invincibility():
 func end_invincibility():
 	is_invincible = false
 	
+func can_heal() -> bool:
+	return !is_dead and current_hp < max_hp
+	
 func heal(amount: int = 1) -> void:
+	if not can_heal():
+		return
+		
 	current_hp = min(current_hp + amount, max_hp)
 	update_hp_display()
 
@@ -136,3 +158,33 @@ func die() -> void:
 func collect_item(item_id: String) -> void:
 	inventory.add_item(item_id)
 	print("Collected item: ", item_id)
+	
+func attack() -> void:
+	if is_dead:
+		return
+		
+	# Play attack animation if you had one
+	# animated_sprite.play("attack")
+	
+	# Set direction of attack area based on player facing direction
+	var facing_direction = 1 if not animated_sprite.flip_h else -1
+	attack_area.scale.x = facing_direction
+	
+	# Trigger the attack effect
+	attack_area.attack()
+	
+	# Start cooldown
+	is_attack_on_cooldown = true
+	await get_tree().create_timer(attack_cooldown).timeout
+	is_attack_on_cooldown = false
+	
+# Handle item usage
+func _on_item_used(item_id: String) -> void:
+	var effect_data = inventory.get_item_effect(item_id)
+	
+	match effect_data.effect:
+		"heal":
+			heal(effect_data.value)
+			print("Used healing item: +" + str(effect_data.value) + " HP")
+		_:
+			print("Used item: " + item_id)

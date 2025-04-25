@@ -70,14 +70,26 @@ size_flags_vertical = 3
 [node name="HSeparator2" type="HSeparator" parent="PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
+[node name="DescriptionLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Item Description"
+
+[node name="UsageHint" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Press E to Use"
+
+[node name="HSeparator3" type="HSeparator" parent="PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
 [node name="CloseButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Close (I)"
 
-[node name="ItemLabelTemplate" type="Label" parent="."]
+[node name="ItemButtonTemplate" type="Button" parent="."]
+visible = false
 layout_mode = 0
 offset_left = 19.0
 offset_top = 23.0
-offset_right = 128.0
-offset_bottom = 46.0
+offset_right = 136.0
+offset_bottom = 54.0
 text = "Item Name x0"

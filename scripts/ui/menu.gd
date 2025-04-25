@@ -1,7 +1,7 @@
 extends Control
 
-@onready var start_button = $StartButton
-@onready var exit_button = $ExitButton
+@onready var start_button = $VBoxContainer/StartButton
+@onready var exit_button = $VBoxContainer/ExitButton
 
 func _ready():
 	get_tree().paused = false

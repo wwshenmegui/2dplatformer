@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://bn6lsgwcm3eki"]
+
+[ext_resource type="Script" uid="uid://bqs1wxqb6l31c" path="res://scripts/player/player_attack.gd" id="1_pqx22"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2x0wg"]
+size = Vector2(308.945, 161.659)
+
+[sub_resource type="Gradient" id="Gradient_2x0wg"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_pqx22"]
+gradient = SubResource("Gradient_2x0wg")
+
+[node name="PlayerAttack" type="Area2D"]
+collision_layer = 64
+collision_mask = 16
+script = ExtResource("1_pqx22")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(70, -1)
+scale = Vector2(0.440207, 0.346408)
+shape = SubResource("RectangleShape2D_2x0wg")
+
+[node name="AttackSprite" type="Sprite2D" parent="."]
+position = Vector2(70, -1)
+scale = Vector2(2.14063, 0.875)
+texture = SubResource("GradientTexture2D_pqx22")

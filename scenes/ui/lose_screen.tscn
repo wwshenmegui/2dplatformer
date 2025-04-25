@@ -8,22 +8,27 @@ font_size = 48
 
 [node name="LoseScreen" type="Control"]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="ColorRect" type="ColorRect" parent="."]
-layout_mode = 0
-offset_right = 1152.0
-offset_bottom = 648.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.54, 0.54, 0.54, 0.231373)
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 0
-offset_left = 326.0
-offset_top = 152.0
-offset_right = 788.0
-offset_bottom = 385.0
+offset_left = 878.0
+offset_top = 374.0
+offset_right = 1340.0
+offset_bottom = 607.0
 text = "You died"
 label_settings = SubResource("LabelSettings_kmlj8")
 horizontal_alignment = 1
@@ -31,16 +36,16 @@ vertical_alignment = 1
 
 [node name="RestartButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 477.0
-offset_top = 338.0
-offset_right = 644.0
-offset_bottom = 404.0
+offset_left = 1039.0
+offset_top = 598.0
+offset_right = 1206.0
+offset_bottom = 664.0
 text = "Restart"
 
 [node name="ExitButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 480.0
-offset_top = 436.0
-offset_right = 640.0
-offset_bottom = 500.0
+offset_left = 1042.0
+offset_top = 696.0
+offset_right = 1202.0
+offset_bottom = 760.0
 text = "Exit to Menu"
