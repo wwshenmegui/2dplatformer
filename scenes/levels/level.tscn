@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=4 uid="uid://cg7gcjm5l4rsv"]
+[gd_scene load_steps=14 format=4 uid="uid://cg7gcjm5l4rsv"]
 
 [ext_resource type="Script" uid="uid://cjcecejywu47c" path="res://scripts/level.gd" id="1_d4w6o"]
 [ext_resource type="PackedScene" uid="uid://ccpaee58xeetu" path="res://scenes/player/player.tscn" id="2_mbbpy"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://c1pun0vaapg5b" path="res://scenes/elements/enemy.tscn" id="6_7pb6i"]
 [ext_resource type="Texture2D" uid="uid://ddtaiy2fttal3" path="res://assets/textures/world_tileset.png" id="6_icy5c"]
 [ext_resource type="PackedScene" uid="uid://gm15uvrhdn2e" path="res://scenes/elements/collectible.tscn" id="9_icy5c"]
+[ext_resource type="PackedScene" uid="uid://dbcjqbxcqs4vv" path="res://scenes/elements/coin.tscn" id="9_rmjfq"]
 
 [sub_resource type="TileMapPattern" id="TileMapPattern_ouxo3"]
 tile_data = PackedInt32Array(0, 0, 1, 65536, 0, 1, 1, 0, 1, 65537, 0, 1)
@@ -206,7 +207,7 @@ is_final_level = true
 position = Vector2(42, 567)
 
 [node name="Exit" parent="." instance=ExtResource("3_ouxo3")]
-position = Vector2(2114, 367)
+position = Vector2(2104, 371)
 
 [node name="Deathzone" parent="." instance=ExtResource("5_icy5c")]
 position = Vector2(-548, 252)
@@ -226,3 +227,14 @@ position = Vector2(-64, 533)
 
 [node name="Collectible2" parent="." instance=ExtResource("9_icy5c")]
 position = Vector2(965, 451)
+
+[node name="Coins" type="Node" parent="."]
+
+[node name="Coin" parent="Coins" instance=ExtResource("9_rmjfq")]
+position = Vector2(669, 493)
+
+[node name="Coin2" parent="Coins" instance=ExtResource("9_rmjfq")]
+position = Vector2(1316, 506)
+
+[node name="Coin3" parent="Coins" instance=ExtResource("9_rmjfq")]
+position = Vector2(1766, 413)

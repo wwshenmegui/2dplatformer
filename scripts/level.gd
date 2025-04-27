@@ -31,13 +31,19 @@ func _ready():
 	# Connect the exit signal
 	exit.connect("exit_reached", _on_exit_reached)
 	
+	# Connect coin signals
+	var coins = get_tree().get_nodes_in_group("Coins")
+	for coin in coins:
+		coin.connect("coin_collected", _on_coin_collected)
+	
 	# Connect collectible signals
 	var collectibles = get_tree().get_nodes_in_group("Collectibles")
 	for collectible in collectibles:
 		collectible.connect("collected", _on_collectible_collected)
 	
-	# Setup backpack UI
+	# Setup backpack UI - IMPORTANT: Set up inventory and player references
 	backpack_ui.set_inventory(player.inventory)
+	backpack_ui.set_player(player)
 	
 	# Hide pause menu and backpack UI at start
 	pause_menu.visible = false
@@ -86,6 +92,10 @@ func reset_player():
 		player.velocity = Vector2.ZERO
 		player.global_position = $Respawn_Point.global_position
 
-# New function to handle collectible collection
+# handle collectible collection
 func _on_collectible_collected(item_id):
 	player.collect_item(item_id)
+	
+# Handle coin collection
+func _on_coin_collected(value):
+	player.collect_coins(value)

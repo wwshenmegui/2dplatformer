@@ -2,6 +2,7 @@ extends Control
 
 # Reference to the inventory resource
 var inventory: Inventory
+var player: Player = null
 
 # Keep track of UI elements for items
 var item_buttons = []
@@ -11,6 +12,8 @@ var current_focus_index = 0
 @onready var item_button_template = $ItemButtonTemplate
 @onready var description_label = $PanelContainer/MarginContainer/VBoxContainer/DescriptionLabel
 @onready var usage_hint = $PanelContainer/MarginContainer/VBoxContainer/UsageHint
+@onready var coins_label = $PanelContainer/MarginContainer/VBoxContainer/CoinsLabel
+@onready var close_button = $PanelContainer/MarginContainer/VBoxContainer/CloseButton
 
 func _ready():
 	# Make this node pause-independent
@@ -23,7 +26,24 @@ func _ready():
 	item_button_template.visible = false
 	
 	# Connect close button
-	$PanelContainer/MarginContainer/VBoxContainer/CloseButton.pressed.connect(toggle_visibility)
+	close_button.pressed.connect(toggle_visibility)
+	
+func set_player(p: Player):
+	# Disconnect from old player if exists
+	if player and player.coins_changed.is_connected(update_coins_display):
+		player.coins_changed.disconnect(update_coins_display)
+	
+	# Set new player reference
+	player = p
+	
+	# Connect to player signals
+	if player:
+		# Connect to coins changed signal
+		if not player.coins_changed.is_connected(update_coins_display):
+			player.coins_changed.connect(update_coins_display)
+		
+		# Initial update
+		update_coins_display(player.coins)
 
 func set_inventory(new_inventory: Inventory):
 	# Disconnect from old inventory if exists
@@ -38,8 +58,16 @@ func set_inventory(new_inventory: Inventory):
 	inventory.inventory_changed.connect(_on_inventory_changed)
 	inventory.item_used.connect(_on_item_used)
 	
+	# Get the player reference (owner of the inventory)
+	if inventory and inventory.owner:
+		set_player(inventory.owner)
+	
 	# Initialize UI
 	refresh_ui()
+	
+func update_coins_display(coin_amount: int):
+	if coins_label:
+		coins_label.text = "Coins: " + str(coin_amount)
 
 func toggle_visibility():
 	visible = !visible
@@ -49,6 +77,10 @@ func toggle_visibility():
 	
 	# If we're showing the inventory, update the UI first to ensure fresh state
 	if visible:
+		# Update coin display
+		if player:
+			update_coins_display(player.coins)
+			
 		refresh_ui()  # Make sure we have updated usability status
 		if not item_buttons.is_empty():
 			set_focus(0)

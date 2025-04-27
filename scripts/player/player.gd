@@ -3,6 +3,7 @@ extends CharacterBody2D
 class_name Player
 
 signal player_died
+signal coins_changed(amount)
 
 # movement variables
 @export var speed = 500
@@ -26,6 +27,9 @@ var knockback_direction = Vector2.ZERO
 
 # Inventory system
 var inventory = Inventory.new()
+
+# Coin system
+var coins = 0
 
 @onready var animated_sprite = $AnimatedSprite2D
 
@@ -154,10 +158,19 @@ func die() -> void:
 	# Notify level about player death
 	player_died.emit()
 	
-# New methods for inventory handling
+# Item collection
 func collect_item(item_id: String) -> void:
 	inventory.add_item(item_id)
 	print("Collected item: ", item_id)
+	
+# Coin collection
+func collect_coins(amount: int) -> void:
+	coins += amount
+	coins_changed.emit(coins)
+	print("Collected ", amount, " coins. Total: ", coins)
+	
+	# Optional: Show a floating "+1" text or play a sound
+	# show_coin_collected_effect(amount)
 	
 func attack() -> void:
 	if is_dead:
