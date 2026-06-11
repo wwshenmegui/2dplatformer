@@ -225,6 +225,7 @@ position = Vector2(0, -34)
 shape = SubResource("RectangleShape2D_3vyb7")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(2, 2)
 limit_bottom = 600
 
 [node name="PlayerAttack" parent="." instance=ExtResource("3_gmlin")]

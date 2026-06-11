@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=4 uid="uid://cg7gcjm5l4rsv"]
+[gd_scene load_steps=14 format=4 uid="uid://c7n4s161bptpi"]
 
 [ext_resource type="Script" uid="uid://cjcecejywu47c" path="res://scripts/level.gd" id="1_d4w6o"]
 [ext_resource type="PackedScene" uid="uid://ccpaee58xeetu" path="res://scenes/player/player.tscn" id="2_mbbpy"]
@@ -199,7 +199,7 @@ pattern_0 = SubResource("TileMapPattern_ouxo3")
 [node name="Level" type="Node2D"]
 position = Vector2(170, -12)
 script = ExtResource("1_d4w6o")
-next_level_path = "res://scenes/levels/level_2.tscn"
+is_final_level = true
 
 [node name="UILayer" parent="." instance=ExtResource("2_ouxo3")]
 

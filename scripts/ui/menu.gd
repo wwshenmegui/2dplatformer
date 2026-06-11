@@ -13,6 +13,8 @@ func _ready():
 	exit_button.pressed.connect(_on_exit_button_pressed)
 
 func _on_start_button_pressed():
+	# Start a brand-new playthrough with no carried-over progress.
+	GameState.reset()
 	# Change to your first game level scene
 	get_tree().change_scene_to_file("res://scenes/levels/level.tscn")
 	

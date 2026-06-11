@@ -14,6 +14,7 @@ func _ready():
 	exit_button.pressed.connect(_on_exit_button_pressed)
 
 func _on_restart_button_pressed() -> void:
+	GameState.reset()
 	get_tree().change_scene_to_file("res://scenes/levels/level.tscn")
 	
 func _on_exit_button_pressed() -> void:

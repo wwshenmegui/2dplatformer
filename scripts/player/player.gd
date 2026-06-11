@@ -48,8 +48,15 @@ func _ready() -> void:
 	
 	# Connect to inventory item_used signal
 	inventory.item_used.connect(_on_item_used)
-	
-	current_hp = max_hp
+
+	# Restore carried-over progress from a previous level, or start fresh.
+	if GameState.has_state:
+		GameState.load_into_player(self)
+		coins_changed.emit(coins)
+		inventory.inventory_changed.emit()
+	else:
+		current_hp = max_hp
+
 	# Notify the HUD to update
 	update_hp_display()
 

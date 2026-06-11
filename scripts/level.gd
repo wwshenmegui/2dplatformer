@@ -1,6 +1,8 @@
 extends Node2D
 
 @export var is_final_level = false
+# Path to the next level scene; used when this is not the final level.
+@export_file("*.tscn") var next_level_path: String = ""
 
 @onready var respawn_point = $Respawn_Point
 @onready var player = $Player
@@ -56,8 +58,13 @@ func _process(delta):
 
 func _on_exit_reached():
 	if is_final_level:
+		# Final level cleared — finish the game.
 		win_screen.visible = true
 		get_tree().paused = true
+	elif next_level_path != "":
+		# Carry the player's progress (HP, coins, inventory) into the next level.
+		GameState.save_player(player)
+		get_tree().change_scene_to_file(next_level_path)
 		
 func _on_player_died():
 	lose_screen.visible = true
