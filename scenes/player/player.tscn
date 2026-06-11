@@ -206,7 +206,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3vyb7"]
-size = Vector2(61, 86)
+size = Vector2(38, 47)
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
@@ -214,19 +214,19 @@ collision_mask = 13
 script = ExtResource("1_g2els")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(3.8147e-06, -72)
-scale = Vector2(4.96094, 4.26563)
+position = Vector2(0, -40)
+scale = Vector2(2.5, 2.5)
 sprite_frames = SubResource("SpriteFrames_tuyoq")
 animation = &"die"
 autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(-3.5, -61)
+position = Vector2(0, -34)
 shape = SubResource("RectangleShape2D_3vyb7")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 limit_bottom = 600
 
 [node name="PlayerAttack" parent="." instance=ExtResource("3_gmlin")]
-position = Vector2(29, -55)
+position = Vector2(20, -35)
 scale = Vector2(0.29749, -0.313341)

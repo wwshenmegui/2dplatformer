@@ -5,6 +5,10 @@ class_name Inventory
 signal inventory_changed
 signal item_used(item_id)
 
+# Source textures for item icons (atlases with 16x16 frames)
+const FRUIT_TEXTURE = preload("res://assets/textures/fruit.png")
+const COIN_TEXTURE = preload("res://assets/textures/coin.png")
+
 # Dictionary to store items and quantities
 var items = {}
 
@@ -15,12 +19,16 @@ var item_properties = {
 		"description": "Restores 1 health point",
 		"usable": true,
 		"effect": "heal",
-		"effect_value": 1
+		"effect_value": 1,
+		"icon_texture": FRUIT_TEXTURE,
+		"icon_region": Rect2(0, 0, 16, 16)
 	},
 	"coin": {
 		"name": "Coin",
 		"description": "Currency",
-		"usable": false
+		"usable": false,
+		"icon_texture": COIN_TEXTURE,
+		"icon_region": Rect2(0, 0, 16, 16)
 	}
 }
 
@@ -71,6 +79,15 @@ func get_item_description(item_id: String) -> String:
 	if item_properties.has(item_id):
 		return item_properties[item_id].description
 	return ""
+
+func get_item_icon(item_id: String) -> Texture2D:
+	if item_properties.has(item_id) and item_properties[item_id].has("icon_texture"):
+		var props = item_properties[item_id]
+		var atlas = AtlasTexture.new()
+		atlas.atlas = props.icon_texture
+		atlas.region = props.get("icon_region", Rect2(0, 0, 16, 16))
+		return atlas
+	return null
 
 func is_item_usable(item_id: String) -> bool:
 	if item_properties.has(item_id):

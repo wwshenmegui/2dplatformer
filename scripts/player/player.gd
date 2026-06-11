@@ -182,7 +182,7 @@ func attack() -> void:
 	# Set direction of attack area based on player facing direction
 	var facing_direction = 1 if not animated_sprite.flip_h else -1
 	attack_area.scale.x = facing_direction
-	
+
 	# Trigger the attack effect
 	attack_area.attack()
 	
