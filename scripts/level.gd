@@ -51,9 +51,11 @@ func _ready():
 	pause_menu.visible = false
 	backpack_ui.visible = false
 	
-func _process(delta):
-	# Check for pause input
-	if Input.is_action_just_pressed("ui_cancel"):  # ESC key
+func _unhandled_input(event):
+	# ESC opens the pause menu during normal gameplay. When paused or when the
+	# inventory is open, those UIs run with PROCESS_MODE_ALWAYS and handle ESC
+	# themselves (consuming the event), while this node is frozen by the pause.
+	if event.is_action_pressed("ui_cancel"):
 		toggle_pause()
 
 func _on_exit_reached():

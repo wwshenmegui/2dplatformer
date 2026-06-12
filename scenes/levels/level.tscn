@@ -205,12 +205,13 @@ next_level_path = "res://scenes/levels/level_2.tscn"
 
 [node name="Player" parent="." instance=ExtResource("2_mbbpy")]
 position = Vector2(21, 547)
+speed = 350
 
 [node name="Exit" parent="." instance=ExtResource("3_ouxo3")]
 position = Vector2(1728, 377)
 
 [node name="Deathzone" parent="." instance=ExtResource("5_icy5c")]
-position = Vector2(-548, 252)
+position = Vector2(-520, -3)
 
 [node name="Respawn_Point" type="Marker2D" parent="."]
 position = Vector2(42, 532)

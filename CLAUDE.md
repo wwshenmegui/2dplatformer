@@ -16,6 +16,7 @@ Defined in `project.godot`:
 - `A` / `D` — move left/right
 - `Space` — jump
 - `J` — attack
+- `Shift` — dash (only active when the player's `dash_enabled` is on)
 - `E` — interact (collect item, use item in inventory)
 - `I` — open/close inventory (backpack)
 - `Escape` — pause

@@ -10,6 +10,22 @@ signal coins_changed(amount)
 @export var gravity = 30
 @export var jumpforce = 700
 
+# Double jump (air jump) ability — toggle on/off
+@export var double_jump_enabled = false
+var jumps_made = 0
+
+# Dash ability — toggle on/off
+@export var dash_enabled = false
+@export var dash_speed = 1200
+@export var dash_duration = 0.2
+@export var dash_cooldown = 0.5
+var is_dashing = false
+var dash_timer = 0.0
+var dash_cooldown_timer = 0.0
+var dash_direction = 1
+# Set true after an air dash; blocks further dashing until the player lands
+var air_dash_used = false
+
 @export var max_hp = 3
 var current_hp = max_hp
 var is_dead = false
@@ -62,20 +78,40 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Tick down the dash cooldown
+	if dash_cooldown_timer > 0.0:
+		dash_cooldown_timer -= delta
+
+	# While dashing, movement is fully controlled by the dash
+	if is_dashing:
+		_process_dash(delta)
+		move_and_slide()
+		update_animation(dash_direction)
+		return
+
 	# Add the gravity
 	if not is_on_floor():
 		velocity.y += gravity
 		if velocity.y > 500:
 			velocity.y = 500
+	else:
+		# Landed — refill the air-jump allowance and re-arm the air dash
+		jumps_made = 0
+		air_dash_used = false
 	
 	var horizontal_direction = 0
 	if not is_being_knocked_back:
-		if Input.is_action_just_pressed("jump") and is_on_floor():
-			velocity.y -= jumpforce
+		if Input.is_action_just_pressed("jump") and _can_jump():
+			velocity.y = -jumpforce
+			jumps_made += 1
 		
 		horizontal_direction = Input.get_axis("move_left", "move_right")
 		
 		velocity.x = speed * horizontal_direction
+
+		# Start a dash if enabled, off cooldown, and not already air-dashed
+		if dash_enabled and Input.is_action_just_pressed("dash") and dash_cooldown_timer <= 0.0 and not air_dash_used:
+			_start_dash(horizontal_direction)
 		
 	move_and_slide()
 
@@ -88,6 +124,36 @@ func _physics_process(delta: float) -> void:
 	# Handle attack input
 	if can_attack and Input.is_action_just_pressed("attack") and not is_attack_on_cooldown:
 		attack()
+
+# Can the player jump right now? Always true on the floor; in the air only
+# when double jump is enabled and an air jump is still available.
+func _can_jump() -> bool:
+	if is_on_floor():
+		return true
+	var max_jumps = 2 if double_jump_enabled else 1
+	return jumps_made < max_jumps
+
+# Begin a dash in the input direction, or the facing direction if no input.
+func _start_dash(input_direction: float) -> void:
+	is_dashing = true
+	dash_timer = dash_duration
+	dash_cooldown_timer = dash_cooldown
+	# An air dash can't be repeated until the player touches the ground again
+	if not is_on_floor():
+		air_dash_used = true
+	if input_direction != 0:
+		dash_direction = signf(input_direction)
+	else:
+		dash_direction = -1 if animated_sprite.flip_h else 1
+	animated_sprite.flip_h = dash_direction < 0
+
+# Drive a horizontal dash, ignoring gravity for its short duration.
+func _process_dash(delta: float) -> void:
+	dash_timer -= delta
+	velocity.x = dash_direction * dash_speed
+	velocity.y = 0
+	if dash_timer <= 0.0:
+		is_dashing = false
 	
 func update_animation(direction):
 	if direction != 0:

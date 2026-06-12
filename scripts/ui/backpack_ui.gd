@@ -221,12 +221,16 @@ func _on_slot_gui_input(event: InputEvent, slot_index: int):
 
 func _input(event):
 	if not visible:
-		if event.is_action_pressed("open_inventory"):
+		# Don't allow opening the inventory while the game is paused
+		# (e.g. the pause menu is up — the tree is only paused by something
+		# other than the backpack when the backpack itself is closed).
+		if event.is_action_pressed("open_inventory") and not get_tree().paused:
 			toggle_visibility()
 		return
 
-	# Handle input only when visible
-	if event.is_action_pressed("open_inventory"):
+	# Handle input only when visible.
+	# Both the inventory key and ESC close the backpack and return to the game.
+	if event.is_action_pressed("open_inventory") or event.is_action_pressed("ui_cancel"):
 		toggle_visibility()
 		get_viewport().set_input_as_handled()
 	elif item_slots.is_empty():

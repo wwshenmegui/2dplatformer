@@ -9,6 +9,13 @@ func _ready():
 	$VBoxContainer/ResumeButton.pressed.connect(_on_resume_button_pressed)
 	$VBoxContainer/QuitButton.pressed.connect(_on_quit_button_pressed)
 
+func _input(event):
+	# Allow ESC to resume the game while the pause menu is showing.
+	# Consuming the event keeps the level from re-detecting ESC and re-pausing.
+	if visible and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		get_parent().get_parent().toggle_pause()
+
 func _on_resume_button_pressed():
 	# Notify level to unpause
 	get_parent().get_parent().toggle_pause()
