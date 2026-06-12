@@ -61,6 +61,11 @@ var coins = 0
 
 @onready var animated_sprite = $AnimatedSprite2D
 
+# Sound effects
+@onready var coin_sound = $CoinSound
+@onready var hurt_sound = $HurtSound
+@onready var jump_sound = $JumpSound
+
 # Attack
 @export var can_attack = true
 @export var attack_cooldown = 0.5
@@ -148,9 +153,11 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("jump"):
 			if is_wall_clinging:
 				_wall_jump()
+				jump_sound.play()
 			elif _can_jump():
 				velocity.y = -jumpforce
 				jumps_made += 1
+				jump_sound.play()
 
 		# Horizontal control is suspended briefly after a wall jump so the
 		# push-away from the wall isn't immediately cancelled by input.
@@ -272,7 +279,8 @@ func take_damage(amount: int = 1, knockback_source_position = null) -> void:
 		
 	current_hp -= amount
 	update_hp_display()
-	
+	hurt_sound.play()
+
 	# Apply knockback if a source position is provided
 	if knockback_source_position != null:
 		apply_knockback(knockback_source_position)
@@ -325,6 +333,7 @@ func die() -> void:
 # Item collection
 func collect_item(item_id: String) -> void:
 	inventory.add_item(item_id)
+	coin_sound.play()
 	print("Collected item: ", item_id)
 
 # Weapon pickup — store it in the inventory's weapon section. If the player is

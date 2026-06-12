@@ -1,8 +1,11 @@
-[gd_scene load_steps=31 format=3 uid="uid://ccpaee58xeetu"]
+[gd_scene load_steps=34 format=3 uid="uid://ccpaee58xeetu"]
 
 [ext_resource type="Script" uid="uid://bg0xfibedidhw" path="res://scripts/player/player.gd" id="1_g2els"]
 [ext_resource type="Texture2D" uid="uid://c6trchpswjup2" path="res://assets/textures/knight.png" id="2_g2els"]
 [ext_resource type="PackedScene" uid="uid://bn6lsgwcm3eki" path="res://scenes/player/player_attack.tscn" id="3_gmlin"]
+[ext_resource type="AudioStream" uid="uid://dqt0ubvmocfge" path="res://assets/sounds/coin.wav" id="4_coin"]
+[ext_resource type="AudioStream" uid="uid://783vqc5iw8j6" path="res://assets/sounds/hurt.wav" id="5_hurt"]
+[ext_resource type="AudioStream" uid="uid://dw6mc4redqc0g" path="res://assets/sounds/jump.wav" id="6_jump"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4ni07"]
 atlas = ExtResource("2_g2els")
@@ -235,3 +238,12 @@ limit_bottom = 600
 [node name="PlayerAttack" parent="." instance=ExtResource("3_gmlin")]
 position = Vector2(20, -35)
 scale = Vector2(0.29749, -0.313341)
+
+[node name="CoinSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_coin")
+
+[node name="HurtSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_hurt")
+
+[node name="JumpSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_jump")
