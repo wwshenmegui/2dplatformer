@@ -215,6 +215,7 @@ script = ExtResource("1_g2els")
 speed = 350
 double_jump_enabled = true
 dash_enabled = true
+wall_jump_enabled = true
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -40)

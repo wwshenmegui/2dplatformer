@@ -26,6 +26,18 @@ var dash_direction = 1
 # Set true after an air dash; blocks further dashing until the player lands
 var air_dash_used = false
 
+# Wall jump / wall cling ability — toggle on/off
+@export var wall_jump_enabled = false
+# Max downward speed while clinging to a wall (slow slide, like Hollow Knight)
+@export var wall_slide_speed = 80
+# Launch impulse on a wall jump: x pushes away from the wall, y throws upward
+@export var wall_jump_force = Vector2(600, 650)
+# How long horizontal input is suspended after a wall jump so the push-away
+# from the wall isn't immediately cancelled by movement input
+@export var wall_jump_lock_duration = 0.18
+var is_wall_clinging = false
+var wall_jump_lock_timer = 0.0
+
 @export var max_hp = 3
 var current_hp = max_hp
 var is_dead = false
@@ -128,13 +140,28 @@ func _physics_process(delta: float) -> void:
 	
 	var horizontal_direction = 0
 	if not is_being_knocked_back:
-		if Input.is_action_just_pressed("jump") and _can_jump():
-			velocity.y = -jumpforce
-			jumps_made += 1
-		
 		horizontal_direction = Input.get_axis("move_left", "move_right")
 
-		velocity.x = speed * horizontal_direction
+		# Wall cling: while airborne and pressing into a wall, grab on.
+		_update_wall_cling(horizontal_direction)
+
+		if Input.is_action_just_pressed("jump"):
+			if is_wall_clinging:
+				_wall_jump()
+			elif _can_jump():
+				velocity.y = -jumpforce
+				jumps_made += 1
+
+		# Horizontal control is suspended briefly after a wall jump so the
+		# push-away from the wall isn't immediately cancelled by input.
+		if wall_jump_lock_timer > 0.0:
+			wall_jump_lock_timer -= delta
+		else:
+			velocity.x = speed * horizontal_direction
+
+		# While clinging, cap the descent to a slow slide.
+		if is_wall_clinging and velocity.y > wall_slide_speed:
+			velocity.y = wall_slide_speed
 
 		# Swinging a weapon slows the player down (by the weapon's slowdown).
 		if attack_area.is_attacking:
@@ -163,6 +190,39 @@ func _can_jump() -> bool:
 		return true
 	var max_jumps = 2 if double_jump_enabled else 1
 	return jumps_made < max_jumps
+
+# Decide whether the player is currently clinging to a wall: the ability must
+# be enabled, the player airborne and not dashing, touching a wall, and pressing
+# into it. Grabbing the wall refreshes the air-jump and air-dash allowances.
+func _update_wall_cling(horizontal_direction: float) -> void:
+	if not wall_jump_enabled or is_dashing or is_on_floor() or not is_on_wall():
+		is_wall_clinging = false
+		return
+
+	# get_wall_normal() points from the wall toward the player, so pressing into
+	# the wall means input goes opposite to the normal's horizontal direction.
+	var wall_normal = get_wall_normal()
+	var pushing_into_wall = horizontal_direction != 0 and signf(horizontal_direction) == -signf(wall_normal.x)
+
+	var was_clinging = is_wall_clinging
+	is_wall_clinging = pushing_into_wall
+
+	# First frame of a fresh grab re-arms air abilities, like landing.
+	if is_wall_clinging and not was_clinging:
+		jumps_made = 0
+		air_dash_used = false
+
+# Launch off the wall: thrown upward and pushed away from the wall surface.
+func _wall_jump() -> void:
+	var wall_normal = get_wall_normal()
+	velocity.y = -wall_jump_force.y
+	velocity.x = wall_normal.x * wall_jump_force.x
+	is_wall_clinging = false
+	wall_jump_lock_timer = wall_jump_lock_duration
+	# Face away from the wall we just kicked off.
+	animated_sprite.flip_h = wall_normal.x < 0
+	# A wall jump doesn't consume an air jump.
+	jumps_made = 0
 
 # Begin a dash in the input direction, or the facing direction if no input.
 func _start_dash(input_direction: float) -> void:
