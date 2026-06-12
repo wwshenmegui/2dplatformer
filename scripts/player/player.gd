@@ -52,12 +52,23 @@ var coins = 0
 # Attack
 @export var can_attack = true
 @export var attack_cooldown = 0.5
+# Multiplier on the attack area's size (1.0 = original)
+@export var attack_size = 1.5
 var is_attack_on_cooldown = false
 
 @onready var attack_area = $PlayerAttack
+# Authored offset of the attack area (facing right). Mirrored when facing left.
+var attack_base_position_x = 0.0
+# Authored vertical scale of the attack area, before the size multiplier.
+var attack_base_scale_y = 0.0
 
 func _ready() -> void:
 	add_to_group("Player")
+
+	# Remember the attack's resting offset so we can mirror it by facing,
+	# and its authored vertical scale so we can apply the size multiplier.
+	attack_base_position_x = attack_area.position.x
+	attack_base_scale_y = attack_area.scale.y
 	
 	# Set this player as the inventory owner
 	inventory.set_owner(self)
@@ -252,9 +263,13 @@ func attack() -> void:
 	# Play attack animation if you had one
 	# animated_sprite.play("attack")
 	
-	# Set direction of attack area based on player facing direction
+	# Set direction of attack area based on player facing direction.
+	# Mirror both the horizontal scale AND the offset so that, facing left,
+	# the attack is the mirror image of facing right (blade in front).
 	var facing_direction = 1 if not animated_sprite.flip_h else -1
-	attack_area.scale.x = facing_direction
+	attack_area.scale.x = facing_direction * attack_size
+	attack_area.scale.y = attack_base_scale_y * attack_size
+	attack_area.position.x = attack_base_position_x * facing_direction
 
 	# Trigger the attack effect
 	attack_area.attack()
