@@ -4,22 +4,29 @@ extends Control
 var inventory: Inventory
 var player: Player = null
 
-# Grid configuration
+# Item grid configuration
 const GRID_COLUMNS = 7
 const GRID_ROWS = 4
 const TOTAL_SLOTS = GRID_COLUMNS * GRID_ROWS
+# Number of weapon cells in the weapon section
+const WEAPON_SLOTS = 4
 
-# All slot panels in the grid (created once, reused)
-var slots = []
-# Slots currently holding an item: [{ "slot", "item_id", "can_use" }]
-var item_slots = []
+# Pre-created cell pools (reused across refreshes)
+var slots = []          # item cells
+var weapon_slots = []    # weapon cells
+
+# Combined, ordered list of currently-filled cells used for focus/navigation.
+# Each entry: { "kind": "item"|"weapon", "slot": Panel, "id": String }
+var focus_cells = []
 var current_focus_index = 0
 
 # Slot border styles
 var normal_style: StyleBoxFlat
 var selected_style: StyleBoxFlat
+var equipped_style: StyleBoxFlat
 
 @onready var item_grid = $PanelContainer/MarginContainer/VBoxContainer/ItemGrid
+@onready var weapon_grid = $PanelContainer/MarginContainer/VBoxContainer/WeaponGrid
 @onready var slot_template = $SlotTemplate
 @onready var description_label = $PanelContainer/MarginContainer/VBoxContainer/DescriptionLabel
 @onready var usage_hint = $PanelContainer/MarginContainer/VBoxContainer/UsageHint
@@ -37,7 +44,7 @@ func _ready():
 	# Hide the template
 	slot_template.visible = false
 
-	# Build the slot styles (normal + selected highlight)
+	# Build the slot styles (normal + selected highlight + equipped marker)
 	normal_style = slot_template.get_theme_stylebox("panel").duplicate()
 	selected_style = normal_style.duplicate()
 	selected_style.border_width_left = 3
@@ -46,7 +53,14 @@ func _ready():
 	selected_style.border_width_bottom = 3
 	selected_style.border_color = Color(1, 0.85, 0.2)
 
-	# Pre-create the fixed grid of slots
+	equipped_style = normal_style.duplicate()
+	equipped_style.border_width_left = 3
+	equipped_style.border_width_top = 3
+	equipped_style.border_width_right = 3
+	equipped_style.border_width_bottom = 3
+	equipped_style.border_color = Color(0.2, 0.9, 0.3)
+
+	# Pre-create the fixed grids of slots
 	_build_slots()
 
 	# Connect close button
@@ -57,8 +71,15 @@ func _build_slots():
 		var slot = slot_template.duplicate()
 		slot.visible = true
 		item_grid.add_child(slot)
-		slot.gui_input.connect(_on_slot_gui_input.bind(i))
+		slot.gui_input.connect(_on_item_slot_gui_input.bind(i))
 		slots.append(slot)
+
+	for i in range(WEAPON_SLOTS):
+		var slot = slot_template.duplicate()
+		slot.visible = true
+		weapon_grid.add_child(slot)
+		slot.gui_input.connect(_on_weapon_slot_gui_input.bind(i))
+		weapon_slots.append(slot)
 
 func set_player(p: Player):
 	# Disconnect from old player if exists
@@ -84,11 +105,14 @@ func set_inventory(new_inventory: Inventory):
 			inventory.inventory_changed.disconnect(_on_inventory_changed)
 		if inventory.item_used.is_connected(_on_item_used):
 			inventory.item_used.disconnect(_on_item_used)
+		if inventory.weapons_changed.is_connected(_on_inventory_changed):
+			inventory.weapons_changed.disconnect(_on_inventory_changed)
 
 	# Connect to new inventory
 	inventory = new_inventory
 	inventory.inventory_changed.connect(_on_inventory_changed)
 	inventory.item_used.connect(_on_item_used)
+	inventory.weapons_changed.connect(_on_inventory_changed)
 
 	# Show the coin icon now that we have item data
 	coin_icon.texture = inventory.get_item_icon("coin")
@@ -117,7 +141,7 @@ func toggle_visibility():
 			update_coins_display(player.coins)
 
 		refresh_ui()  # Make sure we have updated usability status
-		if not item_slots.is_empty():
+		if not focus_cells.is_empty():
 			set_focus(0)
 
 func _on_inventory_changed():
@@ -128,42 +152,49 @@ func _on_item_used(_item_id: String):
 	refresh_ui()
 
 func refresh_ui():
-	item_slots.clear()
+	focus_cells.clear()
 
-	# Reset every slot to empty
+	# Reset every cell to empty
 	for slot in slots:
+		_clear_slot(slot)
+	for slot in weapon_slots:
 		_clear_slot(slot)
 
 	# No inventory yet
 	if not inventory:
 		return
 
-	# Fill slots with items, in order
+	# Fill item cells, in order
 	var items = inventory.get_items()
 	var slot_index = 0
 	for item_id in items.keys():
 		if slot_index >= slots.size():
 			break  # Out of room in the grid
 
-		var count = items[item_id]
-		var can_use = inventory.can_use_item(item_id)
 		var slot = slots[slot_index]
-
-		_fill_slot(slot, item_id, count)
-
-		item_slots.append({
-			"slot": slot,
-			"item_id": item_id,
-			"can_use": can_use
-		})
+		_fill_slot(slot, inventory.get_item_icon(item_id), str(items[item_id]))
+		focus_cells.append({"kind": "item", "slot": slot, "id": item_id})
 		slot_index += 1
 
+	# Fill weapon cells, in order. Equipped weapon shows an "E" marker.
+	var weapons = inventory.get_weapons()
+	var weapon_index = 0
+	for weapon_id in weapons.keys():
+		if weapon_index >= weapon_slots.size():
+			break
+
+		var slot = weapon_slots[weapon_index]
+		var marker = "E" if inventory.is_weapon_equipped(weapon_id) else ""
+		_fill_slot(slot, inventory.get_weapon_icon(weapon_id), marker)
+		focus_cells.append({"kind": "weapon", "slot": slot, "id": weapon_id})
+		weapon_index += 1
+
 	# Update focus / usage hint
-	if item_slots.is_empty():
+	if focus_cells.is_empty():
 		description_label.text = ""
 		usage_hint.visible = false
 	elif visible:
-		current_focus_index = clamp(current_focus_index, 0, item_slots.size() - 1)
+		current_focus_index = clamp(current_focus_index, 0, focus_cells.size() - 1)
 		set_focus(current_focus_index)
 
 func _clear_slot(slot):
@@ -171,53 +202,85 @@ func _clear_slot(slot):
 	slot.get_node("Count").text = ""
 	slot.add_theme_stylebox_override("panel", normal_style)
 
-func _fill_slot(slot, item_id: String, count: int):
-	slot.get_node("Icon").texture = inventory.get_item_icon(item_id)
-	slot.get_node("Count").text = str(count)
+func _fill_slot(slot, texture: Texture2D, count_text: String):
+	slot.get_node("Icon").texture = texture
+	slot.get_node("Count").text = count_text
 
 func set_focus(index: int):
-	if item_slots.is_empty():
+	if focus_cells.is_empty():
 		description_label.text = ""
 		usage_hint.visible = false
 		return
 
 	# Validate index
-	index = clamp(index, 0, item_slots.size() - 1)
+	index = clamp(index, 0, focus_cells.size() - 1)
 	current_focus_index = index
 
-	# Highlight the selected slot only
-	for i in range(item_slots.size()):
-		var style = selected_style if i == index else normal_style
-		item_slots[i].slot.add_theme_stylebox_override("panel", style)
+	# Highlight: selected cell wins; otherwise an equipped weapon keeps a marker.
+	for i in range(focus_cells.size()):
+		var cell = focus_cells[i]
+		var style = normal_style
+		if i == index:
+			style = selected_style
+		elif cell.kind == "weapon" and inventory.is_weapon_equipped(cell.id):
+			style = equipped_style
+		cell.slot.add_theme_stylebox_override("panel", style)
 
-	# Show the selected item's description
-	var item_id = item_slots[index].item_id
-	description_label.text = inventory.get_item_description(item_id)
-
-	# Update the usage hint for the selected item
-	if inventory.is_item_usable(item_id):
-		usage_hint.text = "Left-click or E to use"
-		usage_hint.add_theme_color_override("font_color", Color(0, 1, 0))  # Green
-		usage_hint.visible = true
+	# Show the selected cell's description and the appropriate hint.
+	var focused = focus_cells[index]
+	if focused.kind == "item":
+		description_label.text = inventory.get_item_description(focused.id)
+		if inventory.is_item_usable(focused.id):
+			usage_hint.text = "Left-click or E to use"
+			usage_hint.add_theme_color_override("font_color", Color(0, 1, 0))
+			usage_hint.visible = true
+		else:
+			usage_hint.visible = false
 	else:
-		usage_hint.visible = false
+		var w = inventory.weapons[focused.id]
+		description_label.text = "%s\nDMG %s  ·  SPD %s" % [
+			inventory.get_weapon_description(focused.id),
+			str(w.get("damage", 1)),
+			str(w.get("attack_speed", 1.0))
+		]
+		if inventory.is_weapon_equipped(focused.id):
+			usage_hint.text = "Left-click or E to unequip"
+		else:
+			usage_hint.text = "Left-click or E to equip"
+		usage_hint.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+		usage_hint.visible = true
 
-# Use the item in the given slot if it can be used now. Quietly does
-# nothing when the item is missing or unusable (e.g. health already full).
-func _try_use_item(index: int):
-	if index < 0 or index >= item_slots.size():
+# Activate the focused cell: use the item, or equip/unequip the weapon.
+func _activate(index: int):
+	if index < 0 or index >= focus_cells.size():
 		return
-	var item_id = item_slots[index].item_id
-	if inventory.can_use_item(item_id):
-		inventory.use_item(item_id)
+	var cell = focus_cells[index]
+	if cell.kind == "item":
+		if inventory.can_use_item(cell.id):
+			inventory.use_item(cell.id)
+	else:
+		inventory.toggle_equip_weapon(cell.id)
 
-func _on_slot_gui_input(event: InputEvent, slot_index: int):
+# Map a cell Panel back to its index in the focus list (-1 if not filled).
+func _focus_index_for_slot(slot) -> int:
+	for i in range(focus_cells.size()):
+		if focus_cells[i].slot == slot:
+			return i
+	return -1
+
+func _on_item_slot_gui_input(event: InputEvent, slot_index: int):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		# Only react to slots that hold an item
-		if slot_index < item_slots.size():
-			set_focus(slot_index)
-			# Left-click also uses the item
-			_try_use_item(slot_index)
+		var fi = _focus_index_for_slot(slots[slot_index])
+		if fi != -1:
+			set_focus(fi)
+			_activate(fi)
+
+func _on_weapon_slot_gui_input(event: InputEvent, slot_index: int):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var fi = _focus_index_for_slot(weapon_slots[slot_index])
+		if fi != -1:
+			set_focus(fi)
+			_activate(fi)
 
 func _input(event):
 	if not visible:
@@ -233,7 +296,7 @@ func _input(event):
 	if event.is_action_pressed("open_inventory") or event.is_action_pressed("ui_cancel"):
 		toggle_visibility()
 		get_viewport().set_input_as_handled()
-	elif item_slots.is_empty():
+	elif focus_cells.is_empty():
 		return
 	elif event.is_action_pressed("ui_right"):
 		set_focus(current_focus_index + 1)
@@ -248,5 +311,5 @@ func _input(event):
 		set_focus(current_focus_index - GRID_COLUMNS)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact"):
-		_try_use_item(current_focus_index)
+		_activate(current_focus_index)
 		get_viewport().set_input_as_handled()

@@ -57,6 +57,12 @@ var coins = 0
 var is_attack_on_cooldown = false
 
 @onready var attack_area = $PlayerAttack
+# Base combat stats (no weapon equipped), captured in _ready so an equipped
+# weapon can override them and unequipping can restore them.
+var base_attack_cooldown = 0.0
+var base_attack_damage = 0
+# Movement slowdown of the currently equipped weapon (0 when unarmed).
+var equipped_slowdown = 0.0
 # Authored offset of the attack area (facing right). Mirrored when facing left.
 var attack_base_position_x = 0.0
 # Authored vertical scale of the attack area, before the size multiplier.
@@ -69,18 +75,28 @@ func _ready() -> void:
 	# and its authored vertical scale so we can apply the size multiplier.
 	attack_base_position_x = attack_area.position.x
 	attack_base_scale_y = attack_area.scale.y
-	
+
+	# Remember the unarmed combat stats so weapons can modify and restore them.
+	base_attack_cooldown = attack_cooldown
+	base_attack_damage = attack_area.damage
+
 	# Set this player as the inventory owner
 	inventory.set_owner(self)
-	
+
 	# Connect to inventory item_used signal
 	inventory.item_used.connect(_on_item_used)
+
+	# React to weapons being equipped/unequipped
+	inventory.weapon_equipped.connect(_on_weapon_equipped)
 
 	# Restore carried-over progress from a previous level, or start fresh.
 	if GameState.has_state:
 		GameState.load_into_player(self)
 		coins_changed.emit(coins)
 		inventory.inventory_changed.emit()
+		inventory.weapons_changed.emit()
+		# Re-apply the equipped weapon's stats after a level transition.
+		_on_weapon_equipped(inventory.equipped_weapon_id)
 	else:
 		current_hp = max_hp
 
@@ -117,8 +133,12 @@ func _physics_process(delta: float) -> void:
 			jumps_made += 1
 		
 		horizontal_direction = Input.get_axis("move_left", "move_right")
-		
+
 		velocity.x = speed * horizontal_direction
+
+		# Swinging a weapon slows the player down (by the weapon's slowdown).
+		if attack_area.is_attacking:
+			velocity.x *= _attack_move_factor()
 
 		# Start a dash if enabled, off cooldown, and not already air-dashed
 		if dash_enabled and Input.is_action_just_pressed("dash") and dash_cooldown_timer <= 0.0 and not air_dash_used:
@@ -132,8 +152,8 @@ func _physics_process(delta: float) -> void:
 	if is_being_knocked_back and is_on_floor() and velocity.y >= 0:
 		is_being_knocked_back = false
 		
-	# Handle attack input
-	if can_attack and Input.is_action_just_pressed("attack") and not is_attack_on_cooldown:
+	# Handle attack input — only possible while a weapon is equipped
+	if can_attack and Input.is_action_just_pressed("attack") and not is_attack_on_cooldown and _has_weapon_equipped():
 		attack()
 
 # Can the player jump right now? Always true on the floor; in the air only
@@ -246,6 +266,43 @@ func die() -> void:
 func collect_item(item_id: String) -> void:
 	inventory.add_item(item_id)
 	print("Collected item: ", item_id)
+
+# Weapon pickup — store it in the inventory's weapon section. If the player is
+# currently unarmed, equip the newly picked-up weapon automatically.
+func collect_weapon(weapon_id: String, props: Dictionary) -> void:
+	inventory.add_weapon(weapon_id, props)
+	print("Picked up weapon: ", weapon_id)
+
+	if inventory.equipped_weapon_id == "":
+		inventory.toggle_equip_weapon(weapon_id)
+
+# Apply the equipped weapon's stats, or restore unarmed stats when unequipped.
+func _on_weapon_equipped(weapon_id: String) -> void:
+	if weapon_id == "" or not inventory.weapons.has(weapon_id):
+		attack_cooldown = base_attack_cooldown
+		attack_area.damage = base_attack_damage
+		equipped_slowdown = 0.0
+		# Restore the default swing visual.
+		attack_area.set_weapon(null, 1.0, 0.0)
+		return
+
+	var props = inventory.weapons[weapon_id]
+	attack_area.damage = props.get("damage", base_attack_damage)
+	# Higher attack_speed means a shorter cooldown between swings.
+	var speed_mult = props.get("attack_speed", 1.0)
+	attack_cooldown = base_attack_cooldown / max(speed_mult, 0.01)
+	equipped_slowdown = props.get("slowdown", 0.0)
+	# Show the equipped weapon's texture (scaled to its length) on the swing.
+	attack_area.set_weapon(
+		props.get("icon_texture", null),
+		props.get("attack_scale", 1.0),
+		equipped_slowdown
+	)
+
+# How much the player's movement speed is scaled while mid-swing. The weapon's
+# slowdown magnitude reduces speed (down to a floor so the player never freezes).
+func _attack_move_factor() -> float:
+	return clampf(1.0 - abs(equipped_slowdown), 0.15, 1.0)
 	
 # Coin collection
 func collect_coins(amount: int) -> void:
@@ -256,8 +313,12 @@ func collect_coins(amount: int) -> void:
 	# Optional: Show a floating "+1" text or play a sound
 	# show_coin_collected_effect(amount)
 	
+# The player can only attack while holding an equipped weapon.
+func _has_weapon_equipped() -> bool:
+	return inventory.equipped_weapon_id != ""
+
 func attack() -> void:
-	if is_dead:
+	if is_dead or not _has_weapon_equipped():
 		return
 		
 	# Play attack animation if you had one

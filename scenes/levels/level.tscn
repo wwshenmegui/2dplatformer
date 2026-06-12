@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=4 uid="uid://cg7gcjm5l4rsv"]
+[gd_scene load_steps=16 format=4 uid="uid://cg7gcjm5l4rsv"]
 
 [ext_resource type="Script" uid="uid://cjcecejywu47c" path="res://scripts/level.gd" id="1_d4w6o"]
 [ext_resource type="PackedScene" uid="uid://ccpaee58xeetu" path="res://scenes/player/player.tscn" id="2_mbbpy"]
@@ -9,6 +9,8 @@
 [ext_resource type="Texture2D" uid="uid://ddtaiy2fttal3" path="res://assets/textures/world_tileset.png" id="6_icy5c"]
 [ext_resource type="PackedScene" uid="uid://gm15uvrhdn2e" path="res://scenes/elements/collectible.tscn" id="9_icy5c"]
 [ext_resource type="PackedScene" uid="uid://dbcjqbxcqs4vv" path="res://scenes/elements/coin.tscn" id="9_rmjfq"]
+[ext_resource type="PackedScene" uid="uid://dr03rf5isqsnw" path="res://scenes/elements/straight_sword.tscn" id="10_strsw"]
+[ext_resource type="PackedScene" uid="uid://clpqswk1d278f" path="res://scenes/elements/giant_sword.tscn" id="11_gntsw"]
 
 [sub_resource type="TileMapPattern" id="TileMapPattern_ouxo3"]
 tile_data = PackedInt32Array(0, 0, 1, 65536, 0, 1, 1, 0, 1, 65537, 0, 1)
@@ -205,7 +207,6 @@ next_level_path = "res://scenes/levels/level_2.tscn"
 
 [node name="Player" parent="." instance=ExtResource("2_mbbpy")]
 position = Vector2(21, 547)
-speed = 350
 
 [node name="Exit" parent="." instance=ExtResource("3_ouxo3")]
 position = Vector2(1728, 377)
@@ -247,3 +248,11 @@ position = Vector2(83, 538)
 
 [node name="Collectible2" parent="Collectibles" instance=ExtResource("9_icy5c")]
 position = Vector2(1102, 355)
+
+[node name="Weapons" type="Node" parent="."]
+
+[node name="StraightSword" parent="Weapons" instance=ExtResource("10_strsw")]
+position = Vector2(300, 543)
+
+[node name="GiantSword" parent="Weapons" instance=ExtResource("11_gntsw")]
+position = Vector2(959, 546)

@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://clpqswk1d278f"]
+
+[ext_resource type="Script" uid="uid://bja7mv0o4p8m" path="res://scripts/elements/sword.gd" id="1_swrd0"]
+[ext_resource type="Texture2D" uid="uid://dd3msl6f6r5au" path="res://assets/textures/giant_sword.png" id="2_gntsw"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gntsw"]
+size = Vector2(48, 48)
+
+[node name="GiantSword" type="Area2D"]
+collision_layer = 32
+collision_mask = 2
+script = ExtResource("1_swrd0")
+weapon_id = "giant_sword"
+weapon_name = "Giant Sword"
+description = "A heavy greatsword. Crushing damage but slow to swing."
+weapon_texture = ExtResource("2_gntsw")
+attack_speed = 0.6
+damage = 4
+slowdown = -1.0
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -24)
+texture = ExtResource("2_gntsw")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -24)
+shape = SubResource("RectangleShape2D_gntsw")

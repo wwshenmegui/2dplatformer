@@ -4,6 +4,11 @@ class_name Inventory
 
 signal inventory_changed
 signal item_used(item_id)
+# Weapon system signals
+signal weapons_changed
+# Emitted whenever the equipped weapon changes. weapon_id is "" when nothing
+# is equipped (i.e. the player unequipped their weapon).
+signal weapon_equipped(weapon_id)
 
 # Source textures for item icons (atlases with 16x16 frames)
 const FRUIT_TEXTURE = preload("res://assets/textures/fruit.png")
@@ -31,6 +36,12 @@ var item_properties = {
 		"icon_region": Rect2(0, 0, 16, 16)
 	}
 }
+
+# Weapons the player has picked up: weapon_id -> properties dictionary
+# (name, description, attack_speed, damage, icon_texture).
+var weapons = {}
+# The currently equipped weapon id, or "" when nothing is equipped.
+var equipped_weapon_id = ""
 
 # Reference to the owner of this inventory (typically the player)
 var owner = null
@@ -123,5 +134,52 @@ func use_item(item_id: String) -> bool:
 	
 	# Emit signal that the item was used
 	item_used.emit(item_id)
-	
+
 	return true
+
+# --- Weapon system ---
+
+func add_weapon(weapon_id: String, props: Dictionary) -> void:
+	weapons[weapon_id] = props
+	weapons_changed.emit()
+
+func has_weapon(weapon_id: String) -> bool:
+	return weapons.has(weapon_id)
+
+func get_weapons() -> Dictionary:
+	return weapons.duplicate()
+
+func is_weapon_equipped(weapon_id: String) -> bool:
+	return equipped_weapon_id == weapon_id
+
+func get_equipped_weapon_id() -> String:
+	return equipped_weapon_id
+
+# Toggle the equipped state of a weapon. Equipping a weapon while another is
+# equipped swaps to the new one; selecting the equipped weapon unequips it.
+func toggle_equip_weapon(weapon_id: String) -> void:
+	if not weapons.has(weapon_id):
+		return
+
+	if equipped_weapon_id == weapon_id:
+		equipped_weapon_id = ""
+	else:
+		equipped_weapon_id = weapon_id
+
+	weapon_equipped.emit(equipped_weapon_id)
+	weapons_changed.emit()
+
+func get_weapon_name(weapon_id: String) -> String:
+	if weapons.has(weapon_id):
+		return weapons[weapon_id].get("name", weapon_id.capitalize())
+	return weapon_id.capitalize()
+
+func get_weapon_description(weapon_id: String) -> String:
+	if weapons.has(weapon_id):
+		return weapons[weapon_id].get("description", "")
+	return ""
+
+func get_weapon_icon(weapon_id: String) -> Texture2D:
+	if weapons.has(weapon_id):
+		return weapons[weapon_id].get("icon_texture", null)
+	return null
