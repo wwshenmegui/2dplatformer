@@ -26,6 +26,9 @@ func _ready():
 	# Connect to each enemy's signal
 	for enemy in enemies:
 		enemy.connect("damage_player", _on_enemy_damage_player)
+		# A boss enemy clears the level when defeated.
+		if enemy.has_signal("boss_died"):
+			enemy.boss_died.connect(_on_boss_died)
 		
 	# Connect to deathzone signal
 	deathzone.connect("entered_deathzone", _on_deathzone_body_entered)
@@ -75,6 +78,11 @@ func _on_exit_reached():
 		
 func _on_player_died():
 	lose_screen.visible = true
+	get_tree().paused = true
+
+func _on_boss_died() -> void:
+	# Defeating the boss wins the level.
+	win_screen.visible = true
 	get_tree().paused = true
 	
 func toggle_pause():

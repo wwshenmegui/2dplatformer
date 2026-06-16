@@ -1,0 +1,173 @@
+[gd_scene load_steps=14 format=3 uid="uid://bt1ttd5o3jery"]
+
+[ext_resource type="Script" uid="uid://bmny37mruq6t2" path="res://scripts/elements/dragon.gd" id="1_drg0"]
+[ext_resource type="Texture2D" uid="uid://oivyb6qifkv8" path="res://assets/textures/dragon.png" id="2_drg0"]
+[ext_resource type="PackedScene" uid="uid://btt5dfhovow6v" path="res://scenes/elements/fireball.tscn" id="3_drg0"]
+
+[sub_resource type="Animation" id="Animation_reset"]
+resource_name = "RESET"
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_claw"]
+resource_name = "claw"
+length = 0.7143
+step = 0.0714
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0714, 0.1429, 0.2143, 0.2857, 0.3571, 0.4286, 0.5, 0.5714, 0.6429),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+}
+
+[sub_resource type="Animation" id="Animation_fire"]
+resource_name = "fire"
+length = 0.9091
+step = 0.0909
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0909, 0.1818, 0.2727, 0.3636, 0.4545, 0.5455, 0.6364, 0.7273, 0.8182),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+}
+
+[sub_resource type="Animation" id="Animation_idle"]
+resource_name = "idle"
+length = 1.25
+loop_mode = 1
+step = 0.125
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1, 1.125),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+}
+
+[sub_resource type="Animation" id="Animation_jump"]
+resource_name = "jump"
+length = 0.7143
+step = 0.0714
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0714, 0.1429, 0.2143, 0.2857, 0.3571, 0.4286, 0.5, 0.5714, 0.6429),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+}
+
+[sub_resource type="Animation" id="Animation_move"]
+resource_name = "move"
+length = 0.8333
+loop_mode = 1
+step = 0.0833
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0833, 0.1667, 0.25, 0.3333, 0.4167, 0.5, 0.5833, 0.6667, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_drg0"]
+_data = {
+&"RESET": SubResource("Animation_reset"),
+&"claw": SubResource("Animation_claw"),
+&"fire": SubResource("Animation_fire"),
+&"idle": SubResource("Animation_idle"),
+&"jump": SubResource("Animation_jump"),
+&"move": SubResource("Animation_move")
+}
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(72, 116)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_contact"]
+size = Vector2(88, 124)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_claw"]
+size = Vector2(78, 96)
+
+[node name="Dragon" type="CharacterBody2D"]
+collision_layer = 16
+script = ExtResource("1_drg0")
+fireball_scene = ExtResource("3_drg0")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -99)
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("2_drg0")
+hframes = 10
+vframes = 5
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_drg0")
+}
+autoplay = "idle"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -64)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="ContactBox" type="Area2D" parent="."]
+collision_layer = 16
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactBox"]
+position = Vector2(0, -68)
+shape = SubResource("RectangleShape2D_contact")
+
+[node name="ClawHitbox" type="Area2D" parent="."]
+position = Vector2(78, -72)
+collision_layer = 16
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ClawHitbox"]
+shape = SubResource("RectangleShape2D_claw")
+disabled = true
+
+[node name="FirePoint" type="Marker2D" parent="."]
+position = Vector2(80, -108)
+
+[node name="EdgeCheck" type="RayCast2D" parent="."]
+position = Vector2(48, -12)
+target_position = Vector2(0, 55)
