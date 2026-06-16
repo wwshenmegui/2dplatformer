@@ -12,6 +12,7 @@ extends Node2D
 @onready var deathzone = $Deathzone
 @onready var pause_menu = $UILayer/PauseMenu
 @onready var backpack_ui = $UILayer/BackpackUI
+@onready var boss_health_bar = $UILayer/BossHealthBar
 
 var is_paused = false
 
@@ -26,9 +27,11 @@ func _ready():
 	# Connect to each enemy's signal
 	for enemy in enemies:
 		enemy.connect("damage_player", _on_enemy_damage_player)
-		# A boss enemy clears the level when defeated.
+		# A boss enemy clears the level when defeated and shows a health bar.
 		if enemy.has_signal("boss_died"):
 			enemy.boss_died.connect(_on_boss_died)
+			boss_health_bar.setup("Dragon", enemy.max_health)
+			enemy.health_changed.connect(_on_boss_health_changed)
 		
 	# Connect to deathzone signal
 	deathzone.connect("entered_deathzone", _on_deathzone_body_entered)
@@ -80,8 +83,12 @@ func _on_player_died():
 	lose_screen.visible = true
 	get_tree().paused = true
 
+func _on_boss_health_changed(current: int, max: int) -> void:
+	boss_health_bar.update_health(current)
+
 func _on_boss_died() -> void:
 	# Defeating the boss wins the level.
+	boss_health_bar.visible = false
 	win_screen.visible = true
 	get_tree().paused = true
 	

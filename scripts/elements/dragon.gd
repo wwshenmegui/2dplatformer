@@ -9,6 +9,7 @@ class_name Dragon
 
 signal damage_player
 signal boss_died
+signal health_changed(current: int, max: int)
 
 enum State { CHASE, CLAW, FIRE, DEAD }
 
@@ -227,6 +228,7 @@ func take_damage(amount: int = 1) -> void:
 	if state == State.DEAD:
 		return
 	current_health -= amount
+	health_changed.emit(current_health, max_health)
 	modulate = Color(1, 0.4, 0.4)
 	await get_tree().create_timer(0.12).timeout
 	if state != State.DEAD:
