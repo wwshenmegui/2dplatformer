@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://bxdvlcny6x4ea"]
+
+[ext_resource type="Script" uid="uid://c0bombpickable02" path="res://scripts/elements/bomb.gd" id="1_bomb"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bomb"]
+radius = 27.0185
+
+[node name="Bomb" type="Area2D"]
+collision_layer = 32
+collision_mask = 2
+script = ExtResource("1_bomb")
+
+[node name="Square" type="Polygon2D" parent="."]
+position = Vector2(0, -27)
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-24, -24, 24, -24, 24, 24, -24, 24)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -27)
+shape = SubResource("CircleShape2D_bomb")

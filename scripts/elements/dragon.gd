@@ -23,6 +23,15 @@ enum State { CHASE, CLAW, FIRE, DEAD }
 @export var contact_damage: int = 1
 @export var claw_damage: int = 2
 
+# --- Elemental affinity ---
+# The dragon is a Fire creature: it shrugs off Fire damage and is vulnerable to
+# whatever element beats Fire in the elemental chain (Ice, after the revert).
+@export var element: Element.Type = Element.Type.FIRE
+# Damage taken from its own element, as a fraction (0 = immune, 1 = no resist).
+@export var resist_factor: float = 0.25
+# Damage multiplier from the element it is weak to.
+@export var weakness_multiplier: float = 2.0
+
 # Horizontal distance to the player that triggers each attack. Inside claw_range
 # it claws; between claw_range and fire_range it breathes fire.
 @export var claw_range: float = 130.0
@@ -223,11 +232,12 @@ func _update_animation() -> void:
 # --- Damage -------------------------------------------------------------------
 
 # Hit by the player's weapon. Bosses ignore knockback/slow, so only take_damage
-# is implemented (apply_attack_slowdown is intentionally absent).
-func take_damage(amount: int = 1) -> void:
+# is implemented (apply_attack_slowdown is intentionally absent). attacker_element
+# is the element of the incoming hit, or -1 for a plain (physical) attack.
+func take_damage(amount: int = 1, attacker_element: int = -1) -> void:
 	if state == State.DEAD:
 		return
-	current_health -= amount
+	current_health -= _apply_affinity(amount, attacker_element)
 	health_changed.emit(current_health, max_health)
 	modulate = Color(1, 0.4, 0.4)
 	await get_tree().create_timer(0.12).timeout
@@ -235,6 +245,18 @@ func take_damage(amount: int = 1) -> void:
 		modulate = Color(1, 1, 1)
 	if current_health <= 0:
 		die()
+
+# Scale incoming damage by elemental affinity: the dragon resists its own
+# element and takes extra from the element that beats it. Physical hits
+# (attacker_element < 0) are unaffected. Always deals at least 1 so any hit lands.
+func _apply_affinity(amount: int, attacker_element: int) -> int:
+	if attacker_element < 0:
+		return amount
+	if attacker_element == element:
+		return maxi(1, int(round(amount * resist_factor)))
+	if Element.beats(attacker_element, element):
+		return int(round(amount * weakness_multiplier))
+	return amount
 
 func _on_contact(body: Node2D) -> void:
 	if body.is_in_group("Player") and body.has_method("take_damage") and not body.is_invincible:

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://38iuyuyuv4nq"]
+
+[ext_resource type="PackedScene" uid="uid://b8nbombbase0aa" path="res://scenes/elements/bomb.tscn" id="1_base"]
+
+[node name="LightningBomb" instance=ExtResource("1_base")]
+element = 2

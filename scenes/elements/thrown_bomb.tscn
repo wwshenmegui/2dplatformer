@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://000fo6wtixfe"]
+
+[ext_resource type="Script" uid="uid://c8thrownbomb0aa" path="res://scripts/elements/thrown_bomb.gd" id="1_tb"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tb"]
+size = Vector2(24, 24)
+
+[node name="ThrownBomb" type="Area2D"]
+collision_layer = 0
+collision_mask = 17
+script = ExtResource("1_tb")
+
+[node name="Square" type="Polygon2D" parent="."]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-12, -12, 12, -12, 12, 12, -12, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_tb")

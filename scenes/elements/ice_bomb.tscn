@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dqjh5ckagga3x"]
+
+[ext_resource type="PackedScene" uid="uid://b8nbombbase0aa" path="res://scenes/elements/bomb.tscn" id="1_base"]
+
+[node name="IceBomb" instance=ExtResource("1_base")]
+element = 1

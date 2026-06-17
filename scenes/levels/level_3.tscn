@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=4 uid="uid://b5mjoohyn42dv"]
+[gd_scene load_steps=14 format=4 uid="uid://b5mjoohyn42dv"]
 
 [ext_resource type="Script" uid="uid://cjcecejywu47c" path="res://scripts/level.gd" id="1_d4w6o"]
 [ext_resource type="PackedScene" uid="uid://ccpaee58xeetu" path="res://scenes/player/player.tscn" id="2_mbbpy"]
@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" uid="uid://dun2jr5sadvhp" path="res://scenes/elements/deathzone.tscn" id="5_icy5c"]
 [ext_resource type="Texture2D" uid="uid://ddtaiy2fttal3" path="res://assets/textures/world_tileset.png" id="6_icy5c"]
 [ext_resource type="PackedScene" uid="uid://bt1ttd5o3jery" path="res://scenes/elements/dragon.tscn" id="8_drg0"]
+[ext_resource type="PackedScene" path="res://scenes/elements/fire_bomb.tscn" id="9_fbomb"]
+[ext_resource type="PackedScene" path="res://scenes/elements/ice_bomb.tscn" id="10_ibomb"]
 
 [sub_resource type="TileMapPattern" id="TileMapPattern_ouxo3"]
 tile_data = PackedInt32Array(0, 0, 1, 65536, 0, 1, 1, 0, 1, 65537, 0, 1)
@@ -226,3 +228,9 @@ tile_set = SubResource("TileSet_qfnet")
 position = Vector2(1180, 518)
 
 [node name="Collectibles" type="Node" parent="."]
+
+[node name="FireBomb" parent="Collectibles" instance=ExtResource("9_fbomb")]
+position = Vector2(120, 538)
+
+[node name="IceBomb" parent="Collectibles" instance=ExtResource("10_ibomb")]
+position = Vector2(200, 538)

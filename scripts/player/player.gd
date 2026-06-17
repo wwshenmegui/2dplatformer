@@ -85,6 +85,16 @@ var attack_base_position_x = 0.0
 # Authored vertical scale of the attack area, before the size multiplier.
 var attack_base_scale_y = 0.0
 
+# Ranged (throwable) weapon state. When a ranged weapon such as a bomb is
+# equipped, the attack input throws a projectile instead of swinging the melee
+# attack area. equipped_throw_scene is null when the equipped weapon is melee.
+var equipped_throw_scene: PackedScene = null
+var equipped_throw_element = 0
+var equipped_throw_damage = 0
+# Launch velocity for a thrown weapon (x is mirrored by facing).
+@export var throw_speed = 700.0
+@export var throw_upward = 250.0
+
 func _ready() -> void:
 	add_to_group("Player")
 
@@ -186,9 +196,13 @@ func _physics_process(delta: float) -> void:
 	if is_being_knocked_back and is_on_floor() and velocity.y >= 0:
 		is_being_knocked_back = false
 		
-	# Handle attack input — only possible while a weapon is equipped
+	# Handle attack input — only possible while a weapon is equipped. A ranged
+	# weapon throws a projectile; a melee weapon swings the attack area.
 	if can_attack and Input.is_action_just_pressed("attack") and not is_attack_on_cooldown and _has_weapon_equipped():
-		attack()
+		if _is_ranged_equipped():
+			throw_bomb()
+		else:
+			attack()
 
 # Can the player jump right now? Always true on the floor; in the air only
 # when double jump is enabled and an air jump is still available.
@@ -348,14 +362,22 @@ func collect_weapon(weapon_id: String, props: Dictionary) -> void:
 # Apply the equipped weapon's stats, or restore unarmed stats when unequipped.
 func _on_weapon_equipped(weapon_id: String) -> void:
 	if weapon_id == "" or not inventory.weapons.has(weapon_id):
-		attack_cooldown = base_attack_cooldown
-		attack_area.damage = base_attack_damage
-		equipped_slowdown = 0.0
-		# Restore the default swing visual.
-		attack_area.set_weapon(null, 1.0, 0.0)
+		_restore_melee_defaults()
 		return
 
 	var props = inventory.weapons[weapon_id]
+
+	# Ranged weapons (e.g. bombs) are thrown, not swung. They keep the unarmed
+	# melee stats and instead arm the throw with the weapon's projectile.
+	if props.get("type", "melee") == "ranged":
+		_restore_melee_defaults()
+		equipped_throw_scene = props.get("throw_scene", null)
+		equipped_throw_element = props.get("element", 0)
+		equipped_throw_damage = props.get("damage", base_attack_damage)
+		return
+
+	# Melee weapon.
+	equipped_throw_scene = null
 	attack_area.damage = props.get("damage", base_attack_damage)
 	# Higher attack_speed means a shorter cooldown between swings.
 	var speed_mult = props.get("attack_speed", 1.0)
@@ -367,6 +389,43 @@ func _on_weapon_equipped(weapon_id: String) -> void:
 		props.get("attack_scale", 1.0),
 		equipped_slowdown
 	)
+
+# Reset combat to the unarmed melee state and disarm any ranged weapon.
+func _restore_melee_defaults() -> void:
+	equipped_throw_scene = null
+	attack_cooldown = base_attack_cooldown
+	attack_area.damage = base_attack_damage
+	equipped_slowdown = 0.0
+	attack_area.set_weapon(null, 1.0, 0.0)
+
+func _is_ranged_equipped() -> bool:
+	return equipped_throw_scene != null
+
+# Throw the equipped bomb: spawn its projectile in the facing direction and
+# spend one unit of ammo. Using the last bomb unequips it (handled by the
+# inventory), which clears the ranged state via _on_weapon_equipped.
+func throw_bomb() -> void:
+	if is_dead or equipped_throw_scene == null:
+		return
+
+	var weapon_id = inventory.equipped_weapon_id
+	if inventory.get_weapon_count(weapon_id) <= 0:
+		return
+
+	var facing = -1 if animated_sprite.flip_h else 1
+	var bomb = equipped_throw_scene.instantiate()
+	bomb.element = equipped_throw_element
+	bomb.damage = equipped_throw_damage
+	bomb.global_position = global_position + Vector2(facing * 30, -20)
+	bomb.velocity = Vector2(facing * throw_speed, -throw_upward)
+	get_parent().add_child(bomb)
+
+	inventory.consume_weapon_ammo(weapon_id)
+
+	# Reuse the attack cooldown to pace throws.
+	is_attack_on_cooldown = true
+	await get_tree().create_timer(attack_cooldown).timeout
+	is_attack_on_cooldown = false
 
 # How much the player's movement speed is scaled while mid-swing. The weapon's
 # slowdown magnitude reduces speed (down to a floor so the player never freezes).

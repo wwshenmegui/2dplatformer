@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://d3g2hd7ciiop0" path="res://scripts/ui/lose_screen.gd" id="3_mvntu"]
 [ext_resource type="PackedScene" uid="uid://bega1arqmqmcw" path="res://scenes/ui/pause_menu.tscn" id="5_d4ycy"]
 [ext_resource type="PackedScene" uid="uid://bac4jwj3jl38f" path="res://scenes/ui/backpack_ui.tscn" id="6_jqcis"]
-[ext_resource type="PackedScene" path="res://scenes/ui/boss_health_bar.tscn" id="7_bosshp"]
+[ext_resource type="PackedScene" uid="uid://dvs7qd07lgv82" path="res://scenes/ui/boss_health_bar.tscn" id="7_bosshp"]
 
 [node name="UILayer" type="CanvasLayer"]
 

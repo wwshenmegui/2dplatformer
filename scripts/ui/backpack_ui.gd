@@ -172,7 +172,7 @@ func refresh_ui():
 			break  # Out of room in the grid
 
 		var slot = slots[slot_index]
-		_fill_slot(slot, inventory.get_item_icon(item_id), str(items[item_id]))
+		_fill_slot(slot, inventory.get_item_icon(item_id), str(items[item_id]), inventory.get_item_color(item_id))
 		focus_cells.append({"kind": "item", "slot": slot, "id": item_id})
 		slot_index += 1
 
@@ -184,7 +184,13 @@ func refresh_ui():
 			break
 
 		var slot = weapon_slots[weapon_index]
-		var marker = "E" if inventory.is_weapon_equipped(weapon_id) else ""
+		# Ranged weapons show their remaining ammo; melee weapons show "E" when
+		# equipped. Equipped state is also reflected by the cell border.
+		var marker = ""
+		if inventory.is_weapon_ranged(weapon_id):
+			marker = "x%d" % inventory.get_weapon_count(weapon_id)
+		elif inventory.is_weapon_equipped(weapon_id):
+			marker = "E"
 		_fill_slot(slot, inventory.get_weapon_icon(weapon_id), marker)
 		focus_cells.append({"kind": "weapon", "slot": slot, "id": weapon_id})
 		weapon_index += 1
@@ -199,11 +205,13 @@ func refresh_ui():
 
 func _clear_slot(slot):
 	slot.get_node("Icon").texture = null
+	slot.get_node("Icon").modulate = Color.WHITE
 	slot.get_node("Count").text = ""
 	slot.add_theme_stylebox_override("panel", normal_style)
 
-func _fill_slot(slot, texture: Texture2D, count_text: String):
+func _fill_slot(slot, texture: Texture2D, count_text: String, tint: Color = Color.WHITE):
 	slot.get_node("Icon").texture = texture
+	slot.get_node("Icon").modulate = tint
 	slot.get_node("Count").text = count_text
 
 func set_focus(index: int):
@@ -238,11 +246,18 @@ func set_focus(index: int):
 			usage_hint.visible = false
 	else:
 		var w = inventory.weapons[focused.id]
-		description_label.text = "%s\nDMG %s  ·  SPD %s" % [
-			inventory.get_weapon_description(focused.id),
-			str(w.get("damage", 1)),
-			str(w.get("attack_speed", 1.0))
-		]
+		if inventory.is_weapon_ranged(focused.id):
+			description_label.text = "%s\nDMG %s  ·  x%s left" % [
+				inventory.get_weapon_description(focused.id),
+				str(w.get("damage", 1)),
+				str(inventory.get_weapon_count(focused.id))
+			]
+		else:
+			description_label.text = "%s\nDMG %s  ·  SPD %s" % [
+				inventory.get_weapon_description(focused.id),
+				str(w.get("damage", 1)),
+				str(w.get("attack_speed", 1.0))
+			]
 		if inventory.is_weapon_equipped(focused.id):
 			usage_hint.text = "Left-click or E to unequip"
 		else:

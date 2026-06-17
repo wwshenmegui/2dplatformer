@@ -100,6 +100,12 @@ func get_item_icon(item_id: String) -> Texture2D:
 		return atlas
 	return null
 
+# Tint applied to an item's icon in the UI (white when none is specified).
+func get_item_color(item_id: String) -> Color:
+	if item_properties.has(item_id):
+		return item_properties[item_id].get("icon_modulate", Color.WHITE)
+	return Color.WHITE
+
 func is_item_usable(item_id: String) -> bool:
 	if item_properties.has(item_id):
 		return item_properties[item_id].get("usable", false)
@@ -140,11 +146,46 @@ func use_item(item_id: String) -> bool:
 # --- Weapon system ---
 
 func add_weapon(weapon_id: String, props: Dictionary) -> void:
-	weapons[weapon_id] = props
+	# Ranged (ammo-based) weapons stack: picking up another of the same kind adds
+	# to its count rather than replacing it. Melee weapons are unique.
+	if weapons.has(weapon_id) and is_weapon_ranged(weapon_id):
+		weapons[weapon_id]["count"] = get_weapon_count(weapon_id) + props.get("count", 1)
+	else:
+		weapons[weapon_id] = props
 	weapons_changed.emit()
 
 func has_weapon(weapon_id: String) -> bool:
 	return weapons.has(weapon_id)
+
+# --- Ranged weapons (throwables) ---
+
+func is_weapon_ranged(weapon_id: String) -> bool:
+	return weapons.has(weapon_id) and weapons[weapon_id].get("type", "melee") == "ranged"
+
+# Remaining ammo for a ranged weapon (0 if it isn't held).
+func get_weapon_count(weapon_id: String) -> int:
+	if weapons.has(weapon_id):
+		return weapons[weapon_id].get("count", 1)
+	return 0
+
+# Spend one unit of a ranged weapon's ammo. Returns false when none is left.
+# Using the last unit removes the weapon and unequips it.
+func consume_weapon_ammo(weapon_id: String) -> bool:
+	if not weapons.has(weapon_id):
+		return false
+
+	var count = get_weapon_count(weapon_id) - 1
+	if count <= 0:
+		var was_equipped = equipped_weapon_id == weapon_id
+		weapons.erase(weapon_id)
+		if was_equipped:
+			equipped_weapon_id = ""
+			weapon_equipped.emit("")
+	else:
+		weapons[weapon_id]["count"] = count
+
+	weapons_changed.emit()
+	return true
 
 func get_weapons() -> Dictionary:
 	return weapons.duplicate()

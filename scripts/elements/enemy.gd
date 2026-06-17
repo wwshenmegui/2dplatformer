@@ -113,10 +113,12 @@ func _on_area_2d_body_entered(body: Node2D) -> void:
 		body.take_damage(damage, global_position)
 		damage_player.emit()
 		
-func take_damage(amount: int = 1) -> void:
+# attacker_element is accepted for signature compatibility with elemental
+# attacks (e.g. thrown bombs), but this enemy has no elemental affinity.
+func take_damage(amount: int = 1, _attacker_element: int = -1) -> void:
 	if is_dead:
 		return
-		
+
 	current_health -= amount
 	
 	# Flash the enemy or play damage effect
