@@ -57,6 +57,7 @@ size = Vector2(46, 39)
 [node name="Enemy" type="CharacterBody2D"]
 collision_layer = 16
 script = ExtResource("1_md0e3")
+damage = 3
 
 [node name="EdgeCheck" type="RayCast2D" parent="."]
 position = Vector2(0, -2)

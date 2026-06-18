@@ -64,7 +64,7 @@ func get_properties() -> Dictionary:
 	var element_name := Element.get_display_name(element)
 	return {
 		"name": element_name + " Bomb",
-		"description": "Throwable %s bomb. Equip and press J to throw." % element_name,
+		"description": "Throwable %s bomb. Equip and press K to throw." % element_name,
 		"type": "ranged",
 		"element": element,
 		"damage": damage,

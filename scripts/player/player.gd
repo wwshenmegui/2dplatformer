@@ -38,7 +38,7 @@ var air_dash_used = false
 var is_wall_clinging = false
 var wall_jump_lock_timer = 0.0
 
-@export var max_hp = 3
+@export var max_hp = 20
 var current_hp = max_hp
 var is_dead = false
 
@@ -113,8 +113,8 @@ func _ready() -> void:
 	# Connect to inventory item_used signal
 	inventory.item_used.connect(_on_item_used)
 
-	# React to weapons being equipped/unequipped
-	inventory.weapon_equipped.connect(_on_weapon_equipped)
+	# Re-apply combat stats whenever the equipped weapons change.
+	inventory.weapons_changed.connect(_apply_equipped_weapons)
 
 	# Restore carried-over progress from a previous level, or start fresh.
 	if GameState.has_state:
@@ -122,10 +122,14 @@ func _ready() -> void:
 		coins_changed.emit(coins)
 		inventory.inventory_changed.emit()
 		inventory.weapons_changed.emit()
-		# Re-apply the equipped weapon's stats after a level transition.
-		_on_weapon_equipped(inventory.equipped_weapon_id)
+		inventory.armor_changed.emit()
+		# Re-apply the equipped weapons' stats after a level transition.
+		_apply_equipped_weapons()
 	else:
 		current_hp = max_hp
+		# Seed a starter set of armor so the equipment UI is populated.
+		for armor_id in inventory.armor_properties.keys():
+			inventory.add_armor(armor_id, inventory.armor_properties[armor_id].duplicate(true))
 
 	# Notify the HUD to update
 	update_hp_display()
@@ -196,13 +200,13 @@ func _physics_process(delta: float) -> void:
 	if is_being_knocked_back and is_on_floor() and velocity.y >= 0:
 		is_being_knocked_back = false
 		
-	# Handle attack input — only possible while a weapon is equipped. A ranged
-	# weapon throws a projectile; a melee weapon swings the attack area.
-	if can_attack and Input.is_action_just_pressed("attack") and not is_attack_on_cooldown and _has_weapon_equipped():
-		if _is_ranged_equipped():
-			throw_bomb()
-		else:
+	# Handle attack input. Melee (J) swings the attack area; ranged (K) throws a
+	# projectile. The two are independent — both can be equipped at once.
+	if can_attack and not is_attack_on_cooldown:
+		if Input.is_action_just_pressed("attack") and _has_melee_equipped():
 			attack()
+		elif Input.is_action_just_pressed("attack_ranged") and _has_ranged_equipped():
+			throw_bomb()
 
 # Can the player jump right now? Always true on the floor; in the air only
 # when double jump is enabled and an air jump is still available.
@@ -290,7 +294,11 @@ func update_hp_display():
 func take_damage(amount: int = 1, knockback_source_position = null) -> void:
 	if is_dead:
 		return
-		
+
+	# Equipped armor mitigates incoming damage, but a hit always deals at least 1.
+	if amount > 0:
+		amount = max(amount - inventory.get_total_armor(), 1)
+
 	current_hp -= amount
 	update_hp_display()
 	hurt_sound.play()
@@ -350,34 +358,44 @@ func collect_item(item_id: String) -> void:
 	coin_sound.play()
 	print("Collected item: ", item_id)
 
-# Weapon pickup — store it in the inventory's weapon section. If the player is
-# currently unarmed, equip the newly picked-up weapon automatically.
+# Weapon pickup — store it in the inventory's weapon section. If the matching
+# category slot (melee/ranged) is empty, equip the new weapon automatically.
 func collect_weapon(weapon_id: String, props: Dictionary) -> void:
 	inventory.add_weapon(weapon_id, props)
 	print("Picked up weapon: ", weapon_id)
 
-	if inventory.equipped_weapon_id == "":
+	if inventory.is_weapon_ranged(weapon_id):
+		if inventory.equipped_ranged_id == "":
+			inventory.toggle_equip_weapon(weapon_id)
+	elif inventory.equipped_melee_id == "":
 		inventory.toggle_equip_weapon(weapon_id)
 
-# Apply the equipped weapon's stats, or restore unarmed stats when unequipped.
-func _on_weapon_equipped(weapon_id: String) -> void:
-	if weapon_id == "" or not inventory.weapons.has(weapon_id):
-		_restore_melee_defaults()
+# Armor pickup — store it and auto-equip if its body slot is empty.
+func collect_armor(armor_id: String, props: Dictionary) -> void:
+	inventory.add_armor(armor_id, props)
+	print("Picked up armor: ", armor_id)
+
+	var slot = props.get("slot", "")
+	if inventory.equipped_armor.get(slot, "") == "":
+		inventory.toggle_equip_armor(armor_id)
+
+# Apply both equipped weapon slots: melee stats for the attack swing, and the
+# throw state for the ranged weapon. Either may be empty (restores defaults).
+func _apply_equipped_weapons() -> void:
+	_apply_melee()
+	_apply_ranged()
+
+# Configure the melee swing from the equipped melee weapon, or restore unarmed.
+func _apply_melee() -> void:
+	var melee_id = inventory.equipped_melee_id
+	if melee_id == "" or not inventory.weapons.has(melee_id):
+		attack_cooldown = base_attack_cooldown
+		attack_area.damage = base_attack_damage
+		equipped_slowdown = 0.0
+		attack_area.set_weapon(null, 1.0, 0.0)
 		return
 
-	var props = inventory.weapons[weapon_id]
-
-	# Ranged weapons (e.g. bombs) are thrown, not swung. They keep the unarmed
-	# melee stats and instead arm the throw with the weapon's projectile.
-	if props.get("type", "melee") == "ranged":
-		_restore_melee_defaults()
-		equipped_throw_scene = props.get("throw_scene", null)
-		equipped_throw_element = props.get("element", 0)
-		equipped_throw_damage = props.get("damage", base_attack_damage)
-		return
-
-	# Melee weapon.
-	equipped_throw_scene = null
+	var props = inventory.weapons[melee_id]
 	attack_area.damage = props.get("damage", base_attack_damage)
 	# Higher attack_speed means a shorter cooldown between swings.
 	var speed_mult = props.get("attack_speed", 1.0)
@@ -390,25 +408,26 @@ func _on_weapon_equipped(weapon_id: String) -> void:
 		equipped_slowdown
 	)
 
-# Reset combat to the unarmed melee state and disarm any ranged weapon.
-func _restore_melee_defaults() -> void:
-	equipped_throw_scene = null
-	attack_cooldown = base_attack_cooldown
-	attack_area.damage = base_attack_damage
-	equipped_slowdown = 0.0
-	attack_area.set_weapon(null, 1.0, 0.0)
+# Arm (or disarm) the thrown projectile from the equipped ranged weapon.
+func _apply_ranged() -> void:
+	var ranged_id = inventory.equipped_ranged_id
+	if ranged_id == "" or not inventory.weapons.has(ranged_id):
+		equipped_throw_scene = null
+		return
 
-func _is_ranged_equipped() -> bool:
-	return equipped_throw_scene != null
+	var props = inventory.weapons[ranged_id]
+	equipped_throw_scene = props.get("throw_scene", null)
+	equipped_throw_element = props.get("element", 0)
+	equipped_throw_damage = props.get("damage", base_attack_damage)
 
 # Throw the equipped bomb: spawn its projectile in the facing direction and
 # spend one unit of ammo. Using the last bomb unequips it (handled by the
-# inventory), which clears the ranged state via _on_weapon_equipped.
+# inventory), which clears the ranged state via _apply_equipped_weapons.
 func throw_bomb() -> void:
 	if is_dead or equipped_throw_scene == null:
 		return
 
-	var weapon_id = inventory.equipped_weapon_id
+	var weapon_id = inventory.equipped_ranged_id
 	if inventory.get_weapon_count(weapon_id) <= 0:
 		return
 
@@ -441,12 +460,16 @@ func collect_coins(amount: int) -> void:
 	# Optional: Show a floating "+1" text or play a sound
 	# show_coin_collected_effect(amount)
 	
-# The player can only attack while holding an equipped weapon.
-func _has_weapon_equipped() -> bool:
-	return inventory.equipped_weapon_id != ""
+# The player can only swing while a melee weapon is equipped, and only throw
+# while a ranged weapon is equipped.
+func _has_melee_equipped() -> bool:
+	return inventory.equipped_melee_id != ""
+
+func _has_ranged_equipped() -> bool:
+	return inventory.equipped_ranged_id != ""
 
 func attack() -> void:
-	if is_dead or not _has_weapon_equipped():
+	if is_dead or not _has_melee_equipped():
 		return
 		
 	# Play attack animation if you had one

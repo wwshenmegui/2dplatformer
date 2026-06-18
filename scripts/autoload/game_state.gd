@@ -10,7 +10,10 @@ var current_hp := 0
 var coins := 0
 var inventory_items := {}
 var weapons := {}
-var equipped_weapon_id := ""
+var equipped_melee_id := ""
+var equipped_ranged_id := ""
+var armors := {}
+var equipped_armor := {}
 
 # Snapshot the player's current progress before changing levels.
 func save_player(player) -> void:
@@ -19,7 +22,10 @@ func save_player(player) -> void:
 	coins = player.coins
 	inventory_items = player.inventory.items.duplicate(true)
 	weapons = player.inventory.weapons.duplicate(true)
-	equipped_weapon_id = player.inventory.equipped_weapon_id
+	equipped_melee_id = player.inventory.equipped_melee_id
+	equipped_ranged_id = player.inventory.equipped_ranged_id
+	armors = player.inventory.armors.duplicate(true)
+	equipped_armor = player.inventory.equipped_armor.duplicate(true)
 
 # Apply previously saved progress onto a newly instanced player.
 func load_into_player(player) -> void:
@@ -27,7 +33,10 @@ func load_into_player(player) -> void:
 	player.coins = coins
 	player.inventory.items = inventory_items.duplicate(true)
 	player.inventory.weapons = weapons.duplicate(true)
-	player.inventory.equipped_weapon_id = equipped_weapon_id
+	player.inventory.equipped_melee_id = equipped_melee_id
+	player.inventory.equipped_ranged_id = equipped_ranged_id
+	player.inventory.armors = armors.duplicate(true)
+	player.inventory.equipped_armor = equipped_armor.duplicate(true)
 
 # Clear carried-over state so a fresh playthrough starts from scratch.
 func reset() -> void:
@@ -36,4 +45,7 @@ func reset() -> void:
 	coins = 0
 	inventory_items = {}
 	weapons = {}
-	equipped_weapon_id = ""
+	equipped_melee_id = ""
+	equipped_ranged_id = ""
+	armors = {}
+	equipped_armor = {}

@@ -21,7 +21,9 @@ enum State { CHASE, CLAW, FIRE, DEAD }
 # --- Combat ---
 @export var max_health: int = 12
 @export var contact_damage: int = 1
-@export var claw_damage: int = 2
+@export var claw_damage: int = 15
+# Damage dealt by a spat fireball (applied to the projectile when spawned).
+@export var fireball_damage: int = 20
 
 # --- Elemental affinity ---
 # The dragon is a Fire creature: it shrugs off Fire damage and is vulnerable to
@@ -187,6 +189,7 @@ func breathe_fire() -> void:
 	if fireball_scene == null or player == null:
 		return
 	var fb: Node = fireball_scene.instantiate()
+	fb.damage = fireball_damage
 	get_parent().add_child(fb)
 	fb.global_position = fire_point.global_position
 	fb.direction = (player.global_position - fire_point.global_position).normalized()

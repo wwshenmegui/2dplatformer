@@ -15,7 +15,8 @@ Open the project in Godot 4.4 and press **F5** to run from the main scene (`scen
 Defined in `project.godot`:
 - `A` / `D` — move left/right
 - `Space` — jump
-- `J` — attack
+- `J` — melee attack (swings the equipped melee weapon)
+- `K` — ranged attack (throws the equipped ranged weapon, e.g. a bomb)
 - `Shift` — dash (only active when the player's `dash_enabled` is on)
 - `E` — interact (collect item, use item in inventory)
 - `I` — open/close inventory (backpack)
@@ -56,14 +57,20 @@ Pause/inventory state is mutually exclusive: ESC is blocked while the backpack i
 
 - `CharacterBody2D` with exported `speed`, `gravity`, `jumpforce`, `max_hp`
 - Owns an `Inventory` resource instance; connects its `item_used` signal to apply effects (e.g. `"heal"`)
+- A melee and a ranged weapon can be equipped at once: `J` swings melee, `K` throws ranged. `_apply_equipped_weapons()` (on `weapons_changed`) configures both the attack area and the throw state
+- `take_damage` reduces incoming damage by `inventory.get_total_armor()`, with a floor of 1 (a hit always deals ≥1)
+- On a fresh start (no carried `GameState`), `_ready` seeds the four registry armors so the equipment UI is populated
 - Invincibility uses `await get_tree().create_timer()` — no separate timer node
 - HUD is reached by hardcoded path `/root/Level/UILayer/HpHud`; keep that node path stable
 
 ### Inventory (`scripts/player/inventory.gd`)
 
 - Extends `Resource` (not Node), so it can be passed by reference
-- Item registry lives in `item_properties` dict inside the script — add new item types there
-- Signals: `inventory_changed`, `item_used(item_id)`
+- Item registry lives in `item_properties` dict; armor registry in `armor_properties` — add new types there
+- Three categories with separate storage: `items`, `weapons`, `armors`
+- **Weapons** are split by `type` ("melee"/"ranged") into two independent equip slots: `equipped_melee_id` and `equipped_ranged_id` (one of each can be equipped at once). `toggle_equip_weapon` routes by type
+- **Armor** has four body slots tracked in `equipped_armor` (`head`/`chest`/`hand`/`foot`); `toggle_equip_armor` swaps within a slot. `get_total_armor()` sums equipped armor values; `get_total_attack()` reports the equipped melee damage
+- Signals: `inventory_changed`, `item_used(item_id)`, `weapons_changed`, `armor_changed`
 
 ### Enemy (`scripts/elements/enemy.gd`)
 
@@ -73,6 +80,8 @@ Patrols left/right using an `EdgeCheck` RayCast2D to detect ledges and reverses 
 
 - **Collectibles** (`collectible.gd`) — require `E` to pick up; emit `collected(item_id)` → `player.collect_item(item_id)` → `inventory.add_item()`
 - **Coins** (`coin.gd`) — auto-collected on contact; emit `coin_collected(value)` → `player.collect_coins(value)`; tracked separately from inventory on the player (`player.coins`)
+- **Weapons** (`sword.gd`, `bomb.gd`) — group `Weapons`; emit `collected(weapon_id, props)` → `player.collect_weapon`
+- **Armor** (`armor.gd` / `scenes/elements/armor.tscn`) — group `ArmorPickups`; `E` to pick up; emit `collected(armor_id, props)` → `player.collect_armor`; auto-equips if its body slot is empty
 
 ## Roles
 
@@ -119,4 +128,9 @@ For each issue found, note: the scene tested, the steps to reproduce, the expect
 ### UI
 
 - `BackpackUI` uses `process_mode = PROCESS_MODE_ALWAYS` so it remains interactive while the tree is paused
+- The backpack (`scripts/ui/backpack_ui.gd`) is a 3-view state machine (`enum View { ITEMS, EQUIPMENT, DETAIL }`):
+  - **Items** — item grid + `Use` (shown only for usable items) / `Discard`
+  - **Equipment** — equipped melee/ranged boxes (left), four armor boxes (right), player texture + stats (HP, attack, armor) in the center; clicking any box opens the detail view for that slot
+  - **Detail** — the owned candidates for one slot + an `Equip`/`Unequip` button; the top-left `←` returns to Equipment
+  - The `item`/`equipment` tabs switch the first two views (active tab highlighted, hidden in Detail); `ESC` or `I` closes the backpack from any view
 - `HpHud`, `PauseMenu`, `WinScreen`, `LoseScreen` are children of `UILayer` inside the level scene

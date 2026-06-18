@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://dun2jr5sadvhp" path="res://scenes/elements/deathzone.tscn" id="5_icy5c"]
 [ext_resource type="Texture2D" uid="uid://ddtaiy2fttal3" path="res://assets/textures/world_tileset.png" id="6_icy5c"]
 [ext_resource type="PackedScene" uid="uid://bt1ttd5o3jery" path="res://scenes/elements/dragon.tscn" id="8_drg0"]
-[ext_resource type="PackedScene" path="res://scenes/elements/fire_bomb.tscn" id="9_fbomb"]
+[ext_resource type="PackedScene" uid="uid://b5m1bv6ghkbbe" path="res://scenes/elements/fire_bomb.tscn" id="9_fbomb"]
 [ext_resource type="PackedScene" path="res://scenes/elements/ice_bomb.tscn" id="10_ibomb"]
 
 [sub_resource type="TileMapPattern" id="TileMapPattern_ouxo3"]

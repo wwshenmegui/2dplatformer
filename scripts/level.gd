@@ -53,6 +53,11 @@ func _ready():
 	var weapons = get_tree().get_nodes_in_group("Weapons")
 	for weapon in weapons:
 		weapon.connect("collected", _on_weapon_collected)
+
+	# Connect armor pickup signals
+	var armor_pickups = get_tree().get_nodes_in_group("ArmorPickups")
+	for armor in armor_pickups:
+		armor.connect("collected", _on_armor_collected)
 	
 	# Setup backpack UI - IMPORTANT: Set up inventory and player references
 	backpack_ui.set_inventory(player.inventory)
@@ -128,6 +133,10 @@ func _on_collectible_collected(item_id):
 # handle weapon pickup
 func _on_weapon_collected(weapon_id, props):
 	player.collect_weapon(weapon_id, props)
+
+# handle armor pickup
+func _on_armor_collected(armor_id, props):
+	player.collect_armor(armor_id, props)
 	
 # Handle coin collection
 func _on_coin_collected(value):

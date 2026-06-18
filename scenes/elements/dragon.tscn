@@ -127,6 +127,7 @@ size = Vector2(88, 124)
 size = Vector2(78, 96)
 
 [node name="Dragon" type="CharacterBody2D"]
+position = Vector2(228, 432)
 collision_layer = 16
 script = ExtResource("1_drg0")
 fireball_scene = ExtResource("3_drg0")

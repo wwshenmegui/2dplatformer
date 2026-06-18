@@ -1,330 +1,447 @@
 extends Control
 
+# Backpack with two categories — Items and Equipment — and a per-slot detail
+# screen for choosing what to equip. Three views share one panel:
+#   ITEMS      grid of consumables/materials + Use/Discard actions
+#   EQUIPMENT  equipped melee/ranged weapons, the four armor slots, and stats
+#   DETAIL     the owned candidates for one equipment slot + Equip/Unequip
+enum View { ITEMS, EQUIPMENT, DETAIL }
+
 # Reference to the inventory resource
 var inventory: Inventory
 var player: Player = null
 
-# Item grid configuration
-const GRID_COLUMNS = 7
-const GRID_ROWS = 4
-const TOTAL_SLOTS = GRID_COLUMNS * GRID_ROWS
-# Number of weapon cells in the weapon section
-const WEAPON_SLOTS = 4
+# Grid capacities (cells are reused across refreshes).
+const ITEM_SLOTS = 28
+const DETAIL_SLOTS = 14
+# The equipment slots, in the order shown, mapped to the categories they pull
+# candidates from in the detail view.
+const ARMOR_SLOTS = ["head", "chest", "hand", "foot"]
 
-# Pre-created cell pools (reused across refreshes)
-var slots = []          # item cells
-var weapon_slots = []    # weapon cells
+# Cell pools
+var item_cells = []      # Panels in ItemGrid
+var detail_cells = []    # Panels in DetailGrid
+var equip_cells = {}     # slot name -> Panel (melee/range/head/chest/hand/foot)
 
-# Combined, ordered list of currently-filled cells used for focus/navigation.
-# Each entry: { "kind": "item"|"weapon", "slot": Panel, "id": String }
-var focus_cells = []
-var current_focus_index = 0
+# Navigation / selection state
+var current_view = View.ITEMS
+var detail_slot = ""           # which equipment slot the detail view is editing
+var item_selected_id = ""      # selected item in the ITEMS view
+var detail_selected_id = ""    # selected candidate in the DETAIL view
 
-# Slot border styles
+# Maps a filled cell Panel back to the id it represents, per view.
+var item_cell_ids = {}         # Panel -> item_id
+var detail_cell_ids = {}       # Panel -> candidate id
+
+# Styles
 var normal_style: StyleBoxFlat
 var selected_style: StyleBoxFlat
 var equipped_style: StyleBoxFlat
 
-@onready var item_grid = $PanelContainer/MarginContainer/VBoxContainer/ItemGrid
-@onready var weapon_grid = $PanelContainer/MarginContainer/VBoxContainer/WeaponGrid
+@onready var back_button = $PanelContainer/MarginContainer/Root/TopBar/BackButton
+@onready var coin_icon = $PanelContainer/MarginContainer/Root/TopBar/CoinsDisplay/CoinIcon
+@onready var coins_label = $PanelContainer/MarginContainer/Root/TopBar/CoinsDisplay/CoinsLabel
+@onready var item_tab = $PanelContainer/MarginContainer/Root/Tabs/ItemTab
+@onready var equipment_tab = $PanelContainer/MarginContainer/Root/Tabs/EquipmentTab
+@onready var tabs = $PanelContainer/MarginContainer/Root/Tabs
+
+@onready var items_view = $PanelContainer/MarginContainer/Root/ViewStack/ItemsView
+@onready var item_grid = $PanelContainer/MarginContainer/Root/ViewStack/ItemsView/ItemGrid
+@onready var description_label = $PanelContainer/MarginContainer/Root/ViewStack/ItemsView/DescriptionLabel
+@onready var use_button = $PanelContainer/MarginContainer/Root/ViewStack/ItemsView/ActionRow/UseButton
+@onready var discard_button = $PanelContainer/MarginContainer/Root/ViewStack/ItemsView/ActionRow/DiscardButton
+
+@onready var equipment_view = $PanelContainer/MarginContainer/Root/ViewStack/EquipmentView
+@onready var stats_label = $PanelContainer/MarginContainer/Root/ViewStack/EquipmentView/CenterCol/StatsLabel
+
+@onready var detail_view = $PanelContainer/MarginContainer/Root/ViewStack/DetailView
+@onready var detail_title = $PanelContainer/MarginContainer/Root/ViewStack/DetailView/DetailTitle
+@onready var detail_description = $PanelContainer/MarginContainer/Root/ViewStack/DetailView/DetailDescription
+@onready var detail_grid = $PanelContainer/MarginContainer/Root/ViewStack/DetailView/DetailGrid
+@onready var equip_button = $PanelContainer/MarginContainer/Root/ViewStack/DetailView/EquipButton
+
 @onready var slot_template = $SlotTemplate
-@onready var description_label = $PanelContainer/MarginContainer/VBoxContainer/DescriptionLabel
-@onready var usage_hint = $PanelContainer/MarginContainer/VBoxContainer/UsageHint
-@onready var coin_icon = $PanelContainer/MarginContainer/VBoxContainer/CoinsDisplay/CoinIcon
-@onready var coins_label = $PanelContainer/MarginContainer/VBoxContainer/CoinsDisplay/CoinsLabel
-@onready var close_button = $PanelContainer/MarginContainer/VBoxContainer/CloseButton
 
 func _ready():
-	# Make this node pause-independent
+	# Pause-independent so it stays interactive while the tree is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-
-	# Hide the UI initially
 	visible = false
-
-	# Hide the template
 	slot_template.visible = false
 
-	# Build the slot styles (normal + selected highlight + equipped marker)
+	# Border styles: plain cell, selected (yellow), equipped (green).
 	normal_style = slot_template.get_theme_stylebox("panel").duplicate()
-	selected_style = normal_style.duplicate()
-	selected_style.border_width_left = 3
-	selected_style.border_width_top = 3
-	selected_style.border_width_right = 3
-	selected_style.border_width_bottom = 3
-	selected_style.border_color = Color(1, 0.85, 0.2)
+	selected_style = _bordered(normal_style, Color(1, 0.85, 0.2))
+	equipped_style = _bordered(normal_style, Color(0.2, 0.9, 0.3))
 
-	equipped_style = normal_style.duplicate()
-	equipped_style.border_width_left = 3
-	equipped_style.border_width_top = 3
-	equipped_style.border_width_right = 3
-	equipped_style.border_width_bottom = 3
-	equipped_style.border_color = Color(0.2, 0.9, 0.3)
+	_build_cells()
 
-	# Pre-create the fixed grids of slots
-	_build_slots()
+	# Top bar / tabs
+	back_button.pressed.connect(_on_back_pressed)
+	item_tab.pressed.connect(_show_view.bind(View.ITEMS))
+	equipment_tab.pressed.connect(_show_view.bind(View.EQUIPMENT))
 
-	# Connect close button
-	close_button.pressed.connect(toggle_visibility)
+	# Item action buttons
+	use_button.pressed.connect(_on_use_pressed)
+	discard_button.pressed.connect(_on_discard_pressed)
 
-func _build_slots():
-	for i in range(TOTAL_SLOTS):
-		var slot = slot_template.duplicate()
-		slot.visible = true
-		item_grid.add_child(slot)
-		slot.gui_input.connect(_on_item_slot_gui_input.bind(i))
-		slots.append(slot)
+	# Equip/unequip button in the detail view
+	equip_button.pressed.connect(_on_equip_pressed)
 
-	for i in range(WEAPON_SLOTS):
-		var slot = slot_template.duplicate()
-		slot.visible = true
-		weapon_grid.add_child(slot)
-		slot.gui_input.connect(_on_weapon_slot_gui_input.bind(i))
-		weapon_slots.append(slot)
+func _bordered(base: StyleBoxFlat, color: Color) -> StyleBoxFlat:
+	var s = base.duplicate()
+	s.border_width_left = 3
+	s.border_width_top = 3
+	s.border_width_right = 3
+	s.border_width_bottom = 3
+	s.border_color = color
+	return s
+
+func _build_cells():
+	for i in range(ITEM_SLOTS):
+		var cell = _new_cell()
+		item_grid.add_child(cell)
+		cell.gui_input.connect(_on_item_cell_input.bind(cell))
+		item_cells.append(cell)
+
+	for i in range(DETAIL_SLOTS):
+		var cell = _new_cell()
+		detail_grid.add_child(cell)
+		cell.gui_input.connect(_on_detail_cell_input.bind(cell))
+		detail_cells.append(cell)
+
+	# One equip box per equipment slot, placed in its holder. Clicking a box
+	# opens the detail view for that slot.
+	var holders = {
+		"melee": $PanelContainer/MarginContainer/Root/ViewStack/EquipmentView/LeftCol/MeleeHolder,
+		"range": $PanelContainer/MarginContainer/Root/ViewStack/EquipmentView/LeftCol/RangeHolder,
+		"head": $PanelContainer/MarginContainer/Root/ViewStack/EquipmentView/RightCol/HeadHolder,
+		"chest": $PanelContainer/MarginContainer/Root/ViewStack/EquipmentView/RightCol/ChestHolder,
+		"hand": $PanelContainer/MarginContainer/Root/ViewStack/EquipmentView/RightCol/HandHolder,
+		"foot": $PanelContainer/MarginContainer/Root/ViewStack/EquipmentView/RightCol/FootHolder,
+	}
+	for slot in holders.keys():
+		var cell = _new_cell()
+		holders[slot].add_child(cell)
+		cell.gui_input.connect(_on_equip_box_input.bind(slot))
+		equip_cells[slot] = cell
+
+func _new_cell() -> Panel:
+	var cell = slot_template.duplicate()
+	cell.visible = true
+	return cell
+
+# --- Wiring ---
 
 func set_player(p: Player):
-	# Disconnect from old player if exists
 	if player and player.coins_changed.is_connected(update_coins_display):
 		player.coins_changed.disconnect(update_coins_display)
-
-	# Set new player reference
 	player = p
-
-	# Connect to player signals
 	if player:
-		# Connect to coins changed signal
 		if not player.coins_changed.is_connected(update_coins_display):
 			player.coins_changed.connect(update_coins_display)
-
-		# Initial update
 		update_coins_display(player.coins)
 
 func set_inventory(new_inventory: Inventory):
-	# Disconnect from old inventory if exists
 	if inventory:
-		if inventory.inventory_changed.is_connected(_on_inventory_changed):
-			inventory.inventory_changed.disconnect(_on_inventory_changed)
-		if inventory.item_used.is_connected(_on_item_used):
-			inventory.item_used.disconnect(_on_item_used)
-		if inventory.weapons_changed.is_connected(_on_inventory_changed):
-			inventory.weapons_changed.disconnect(_on_inventory_changed)
+		if inventory.inventory_changed.is_connected(_on_data_changed):
+			inventory.inventory_changed.disconnect(_on_data_changed)
+		if inventory.weapons_changed.is_connected(_on_data_changed):
+			inventory.weapons_changed.disconnect(_on_data_changed)
+		if inventory.armor_changed.is_connected(_on_data_changed):
+			inventory.armor_changed.disconnect(_on_data_changed)
 
-	# Connect to new inventory
 	inventory = new_inventory
-	inventory.inventory_changed.connect(_on_inventory_changed)
-	inventory.item_used.connect(_on_item_used)
-	inventory.weapons_changed.connect(_on_inventory_changed)
+	inventory.inventory_changed.connect(_on_data_changed)
+	inventory.weapons_changed.connect(_on_data_changed)
+	inventory.armor_changed.connect(_on_data_changed)
 
-	# Show the coin icon now that we have item data
 	coin_icon.texture = inventory.get_item_icon("coin")
 
-	# Get the player reference (owner of the inventory)
 	if inventory and inventory.owner:
 		set_player(inventory.owner)
 
-	# Initialize UI
-	refresh_ui()
+	_refresh_current_view()
 
 func update_coins_display(coin_amount: int):
 	if coins_label:
 		coins_label.text = "x " + str(coin_amount)
 
+func _on_data_changed():
+	_refresh_current_view()
+
+# --- Open / close & view switching ---
+
 func toggle_visibility():
 	visible = !visible
-
-	# Pause/unpause the game when inventory is open/closed
 	get_tree().paused = visible
-
-	# If we're showing the inventory, update the UI first to ensure fresh state
 	if visible:
-		# Update coin display
 		if player:
 			update_coins_display(player.coins)
+		_show_view(View.ITEMS)
 
-		refresh_ui()  # Make sure we have updated usability status
-		if not focus_cells.is_empty():
-			set_focus(0)
+func _on_back_pressed():
+	# In the detail view the arrow returns to the equipment view; elsewhere it
+	# closes the backpack.
+	if current_view == View.DETAIL:
+		_show_view(View.EQUIPMENT)
+	else:
+		toggle_visibility()
 
-func _on_inventory_changed():
-	refresh_ui()
+func _show_view(view: int):
+	current_view = view
+	items_view.visible = view == View.ITEMS
+	equipment_view.visible = view == View.EQUIPMENT
+	detail_view.visible = view == View.DETAIL
+	# Category tabs are hidden while drilling into a single slot.
+	tabs.visible = view != View.DETAIL
+	_update_tab_highlight()
+	_refresh_current_view()
 
-func _on_item_used(_item_id: String):
-	# Just refresh the UI after item usage
-	refresh_ui()
+func _update_tab_highlight():
+	var active = Color(1, 0.85, 0.2)
+	var inactive = Color(0.6, 0.6, 0.6)
+	item_tab.add_theme_color_override("font_color", active if current_view == View.ITEMS else inactive)
+	equipment_tab.add_theme_color_override("font_color", active if current_view == View.EQUIPMENT else inactive)
 
-func refresh_ui():
-	focus_cells.clear()
-
-	# Reset every cell to empty
-	for slot in slots:
-		_clear_slot(slot)
-	for slot in weapon_slots:
-		_clear_slot(slot)
-
-	# No inventory yet
+func _refresh_current_view():
 	if not inventory:
 		return
+	match current_view:
+		View.ITEMS:
+			_refresh_items()
+		View.EQUIPMENT:
+			_refresh_equipment()
+		View.DETAIL:
+			_refresh_detail()
 
-	# Fill item cells, in order
+# --- Cell helpers ---
+
+func _clear_cell(cell):
+	cell.get_node("Icon").texture = null
+	cell.get_node("Icon").modulate = Color.WHITE
+	cell.get_node("Count").text = ""
+	cell.add_theme_stylebox_override("panel", normal_style)
+
+func _fill_cell(cell, texture: Texture2D, count_text: String = "", tint: Color = Color.WHITE):
+	cell.get_node("Icon").texture = texture
+	cell.get_node("Icon").modulate = tint
+	cell.get_node("Count").text = count_text
+
+# --- Items view ---
+
+func _refresh_items():
+	item_cell_ids.clear()
+	for cell in item_cells:
+		_clear_cell(cell)
+
 	var items = inventory.get_items()
-	var slot_index = 0
-	for item_id in items.keys():
-		if slot_index >= slots.size():
-			break  # Out of room in the grid
+	var ids = items.keys()
+	# Keep selection valid.
+	if item_selected_id != "" and not items.has(item_selected_id):
+		item_selected_id = ""
+	if item_selected_id == "" and not ids.is_empty():
+		item_selected_id = ids[0]
 
-		var slot = slots[slot_index]
-		_fill_slot(slot, inventory.get_item_icon(item_id), str(items[item_id]), inventory.get_item_color(item_id))
-		focus_cells.append({"kind": "item", "slot": slot, "id": item_id})
-		slot_index += 1
-
-	# Fill weapon cells, in order. Equipped weapon shows an "E" marker.
-	var weapons = inventory.get_weapons()
-	var weapon_index = 0
-	for weapon_id in weapons.keys():
-		if weapon_index >= weapon_slots.size():
+	var i = 0
+	for item_id in ids:
+		if i >= item_cells.size():
 			break
+		var cell = item_cells[i]
+		_fill_cell(cell, inventory.get_item_icon(item_id), str(items[item_id]), inventory.get_item_color(item_id))
+		item_cell_ids[cell] = item_id
+		if item_id == item_selected_id:
+			cell.add_theme_stylebox_override("panel", selected_style)
+		i += 1
 
-		var slot = weapon_slots[weapon_index]
-		# Ranged weapons show their remaining ammo; melee weapons show "E" when
-		# equipped. Equipped state is also reflected by the cell border.
+	_update_item_actions()
+
+func _update_item_actions():
+	if item_selected_id == "" or not inventory.has_item(item_selected_id):
+		description_label.text = ""
+		use_button.visible = false
+		discard_button.visible = false
+		return
+
+	description_label.text = "%s\n%s" % [
+		inventory.get_item_name(item_selected_id),
+		inventory.get_item_description(item_selected_id)
+	]
+	# The Use button only appears for usable items.
+	use_button.visible = inventory.is_item_usable(item_selected_id)
+	use_button.disabled = not inventory.can_use_item(item_selected_id)
+	discard_button.visible = true
+
+func _on_item_cell_input(event: InputEvent, cell):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if item_cell_ids.has(cell):
+			item_selected_id = item_cell_ids[cell]
+			_refresh_items()
+
+func _on_use_pressed():
+	if item_selected_id != "" and inventory.can_use_item(item_selected_id):
+		inventory.use_item(item_selected_id)
+
+func _on_discard_pressed():
+	if item_selected_id != "":
+		inventory.discard_item(item_selected_id)
+
+# --- Equipment view ---
+
+func _refresh_equipment():
+	# Weapon boxes
+	_fill_equip_box("melee", inventory.get_equipped_melee_id(), true)
+	_fill_equip_box("range", inventory.get_equipped_ranged_id(), true)
+	# Armor boxes
+	for slot in ARMOR_SLOTS:
+		_fill_equip_box(slot, inventory.equipped_armor.get(slot, ""), false)
+
+	# Stats panel
+	var hp_text = "?"
+	if player:
+		hp_text = "%d / %d" % [player.current_hp, player.max_hp]
+	stats_label.text = "HP: %s\nAttack: %d\nArmor: %d" % [
+		hp_text, inventory.get_total_attack(), inventory.get_total_armor()
+	]
+
+func _fill_equip_box(slot: String, equipped_id: String, is_weapon: bool):
+	var cell = equip_cells[slot]
+	_clear_cell(cell)
+	if equipped_id == "":
+		return
+	if is_weapon:
+		_fill_cell(cell, inventory.get_weapon_icon(equipped_id))
+	else:
+		_fill_cell(cell, inventory.get_armor_icon(equipped_id))
+	cell.add_theme_stylebox_override("panel", equipped_style)
+
+func _on_equip_box_input(event: InputEvent, slot: String):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		detail_slot = slot
+		detail_selected_id = ""
+		_show_view(View.DETAIL)
+
+# --- Detail view ---
+
+# Candidates for the current detail slot: weapons by type, or armor by slot.
+func _detail_candidates() -> Dictionary:
+	if detail_slot == "melee":
+		return inventory.get_weapons_by_type("melee")
+	elif detail_slot == "range":
+		return inventory.get_weapons_by_type("ranged")
+	else:
+		return inventory.get_armors_by_slot(detail_slot)
+
+func _slot_is_weapon() -> bool:
+	return detail_slot == "melee" or detail_slot == "range"
+
+func _refresh_detail():
+	detail_title.text = detail_slot
+
+	detail_cell_ids.clear()
+	for cell in detail_cells:
+		_clear_cell(cell)
+
+	var candidates = _detail_candidates()
+	var ids = candidates.keys()
+
+	# Default the selection to the equipped piece, else the first candidate.
+	if detail_selected_id != "" and not candidates.has(detail_selected_id):
+		detail_selected_id = ""
+	if detail_selected_id == "":
+		for id in ids:
+			if _is_equipped(id):
+				detail_selected_id = id
+				break
+	if detail_selected_id == "" and not ids.is_empty():
+		detail_selected_id = ids[0]
+
+	var i = 0
+	for id in ids:
+		if i >= detail_cells.size():
+			break
+		var cell = detail_cells[i]
 		var marker = ""
-		if inventory.is_weapon_ranged(weapon_id):
-			marker = "x%d" % inventory.get_weapon_count(weapon_id)
-		elif inventory.is_weapon_equipped(weapon_id):
-			marker = "E"
-		_fill_slot(slot, inventory.get_weapon_icon(weapon_id), marker)
-		focus_cells.append({"kind": "weapon", "slot": slot, "id": weapon_id})
-		weapon_index += 1
+		if _slot_is_weapon() and inventory.is_weapon_ranged(id):
+			marker = "x%d" % inventory.get_weapon_count(id)
+		_fill_cell(cell, _candidate_icon(id), marker)
+		detail_cell_ids[cell] = id
+		if id == detail_selected_id:
+			cell.add_theme_stylebox_override("panel", selected_style)
+		elif _is_equipped(id):
+			cell.add_theme_stylebox_override("panel", equipped_style)
+		i += 1
 
-	# Update focus / usage hint
-	if focus_cells.is_empty():
-		description_label.text = ""
-		usage_hint.visible = false
-	elif visible:
-		current_focus_index = clamp(current_focus_index, 0, focus_cells.size() - 1)
-		set_focus(current_focus_index)
+	_update_detail_actions()
 
-func _clear_slot(slot):
-	slot.get_node("Icon").texture = null
-	slot.get_node("Icon").modulate = Color.WHITE
-	slot.get_node("Count").text = ""
-	slot.add_theme_stylebox_override("panel", normal_style)
+func _candidate_icon(id: String) -> Texture2D:
+	if _slot_is_weapon():
+		return inventory.get_weapon_icon(id)
+	return inventory.get_armor_icon(id)
 
-func _fill_slot(slot, texture: Texture2D, count_text: String, tint: Color = Color.WHITE):
-	slot.get_node("Icon").texture = texture
-	slot.get_node("Icon").modulate = tint
-	slot.get_node("Count").text = count_text
+func _is_equipped(id: String) -> bool:
+	if _slot_is_weapon():
+		return inventory.is_weapon_equipped(id)
+	return inventory.is_armor_equipped(id)
 
-func set_focus(index: int):
-	if focus_cells.is_empty():
-		description_label.text = ""
-		usage_hint.visible = false
+func _update_detail_actions():
+	if detail_selected_id == "":
+		detail_description.text = "Nothing here yet."
+		equip_button.visible = false
 		return
 
-	# Validate index
-	index = clamp(index, 0, focus_cells.size() - 1)
-	current_focus_index = index
-
-	# Highlight: selected cell wins; otherwise an equipped weapon keeps a marker.
-	for i in range(focus_cells.size()):
-		var cell = focus_cells[i]
-		var style = normal_style
-		if i == index:
-			style = selected_style
-		elif cell.kind == "weapon" and inventory.is_weapon_equipped(cell.id):
-			style = equipped_style
-		cell.slot.add_theme_stylebox_override("panel", style)
-
-	# Show the selected cell's description and the appropriate hint.
-	var focused = focus_cells[index]
-	if focused.kind == "item":
-		description_label.text = inventory.get_item_description(focused.id)
-		if inventory.is_item_usable(focused.id):
-			usage_hint.text = "Left-click or E to use"
-			usage_hint.add_theme_color_override("font_color", Color(0, 1, 0))
-			usage_hint.visible = true
+	equip_button.visible = true
+	var id = detail_selected_id
+	if _slot_is_weapon():
+		var w = inventory.weapons[id]
+		if inventory.is_weapon_ranged(id):
+			detail_description.text = "%s\n%s\nDMG %s  ·  x%s left" % [
+				inventory.get_weapon_name(id), inventory.get_weapon_description(id),
+				str(w.get("damage", 1)), str(inventory.get_weapon_count(id))
+			]
 		else:
-			usage_hint.visible = false
+			detail_description.text = "%s\n%s\nDMG %s  ·  SPD %s" % [
+				inventory.get_weapon_name(id), inventory.get_weapon_description(id),
+				str(w.get("damage", 1)), str(w.get("attack_speed", 1.0))
+			]
 	else:
-		var w = inventory.weapons[focused.id]
-		if inventory.is_weapon_ranged(focused.id):
-			description_label.text = "%s\nDMG %s  ·  x%s left" % [
-				inventory.get_weapon_description(focused.id),
-				str(w.get("damage", 1)),
-				str(inventory.get_weapon_count(focused.id))
-			]
-		else:
-			description_label.text = "%s\nDMG %s  ·  SPD %s" % [
-				inventory.get_weapon_description(focused.id),
-				str(w.get("damage", 1)),
-				str(w.get("attack_speed", 1.0))
-			]
-		if inventory.is_weapon_equipped(focused.id):
-			usage_hint.text = "Left-click or E to unequip"
-		else:
-			usage_hint.text = "Left-click or E to equip"
-		usage_hint.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
-		usage_hint.visible = true
+		detail_description.text = "%s\n%s\nArmor +%d" % [
+			inventory.get_armor_name(id), inventory.get_armor_description(id),
+			inventory.get_armor_value(id)
+		]
+	equip_button.text = "Unequip" if _is_equipped(id) else "Equip"
 
-# Activate the focused cell: use the item, or equip/unequip the weapon.
-func _activate(index: int):
-	if index < 0 or index >= focus_cells.size():
+func _on_detail_cell_input(event: InputEvent, cell):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if detail_cell_ids.has(cell):
+			detail_selected_id = detail_cell_ids[cell]
+			_refresh_detail()
+
+func _on_equip_pressed():
+	if detail_selected_id == "":
 		return
-	var cell = focus_cells[index]
-	if cell.kind == "item":
-		if inventory.can_use_item(cell.id):
-			inventory.use_item(cell.id)
+	if _slot_is_weapon():
+		inventory.toggle_equip_weapon(detail_selected_id)
 	else:
-		inventory.toggle_equip_weapon(cell.id)
+		inventory.toggle_equip_armor(detail_selected_id)
+	_refresh_detail()
 
-# Map a cell Panel back to its index in the focus list (-1 if not filled).
-func _focus_index_for_slot(slot) -> int:
-	for i in range(focus_cells.size()):
-		if focus_cells[i].slot == slot:
-			return i
-	return -1
-
-func _on_item_slot_gui_input(event: InputEvent, slot_index: int):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var fi = _focus_index_for_slot(slots[slot_index])
-		if fi != -1:
-			set_focus(fi)
-			_activate(fi)
-
-func _on_weapon_slot_gui_input(event: InputEvent, slot_index: int):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var fi = _focus_index_for_slot(weapon_slots[slot_index])
-		if fi != -1:
-			set_focus(fi)
-			_activate(fi)
+# --- Input ---
 
 func _input(event):
 	if not visible:
-		# Don't allow opening the inventory while the game is paused
-		# (e.g. the pause menu is up — the tree is only paused by something
-		# other than the backpack when the backpack itself is closed).
+		# Don't open while something else paused the tree (e.g. pause menu).
 		if event.is_action_pressed("open_inventory") and not get_tree().paused:
 			toggle_visibility()
 		return
 
-	# Handle input only when visible.
-	# Both the inventory key and ESC close the backpack and return to the game.
+	# ESC always closes the whole backpack; the inventory key toggles it too.
 	if event.is_action_pressed("open_inventory") or event.is_action_pressed("ui_cancel"):
 		toggle_visibility()
 		get_viewport().set_input_as_handled()
-	elif focus_cells.is_empty():
-		return
-	elif event.is_action_pressed("ui_right"):
-		set_focus(current_focus_index + 1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_left"):
-		set_focus(current_focus_index - 1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_down"):
-		set_focus(current_focus_index + GRID_COLUMNS)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_up"):
-		set_focus(current_focus_index - GRID_COLUMNS)
-		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact"):
-		_activate(current_focus_index)
+		# E activates the current selection: use an item, or equip/unequip.
+		if current_view == View.ITEMS:
+			_on_use_pressed()
+		elif current_view == View.DETAIL:
+			_on_equip_pressed()
 		get_viewport().set_input_as_handled()
