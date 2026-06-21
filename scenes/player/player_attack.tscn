@@ -1,10 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://bn6lsgwcm3eki"]
+[gd_scene load_steps=3 format=3 uid="uid://bn6lsgwcm3eki"]
 
 [ext_resource type="Script" uid="uid://bqs1wxqb6l31c" path="res://scripts/player/player_attack.gd" id="1_pqx22"]
-[ext_resource type="Texture2D" uid="uid://c0w0n5eey77q5" path="res://assets/textures/straight_sword.png" id="2_strsw"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_2x0wg"]
-size = Vector2(308.945, 161.659)
+size = Vector2(60, 50)
 
 [node name="PlayerAttack" type="Area2D"]
 collision_layer = 64
@@ -12,11 +11,4 @@ collision_mask = 16
 script = ExtResource("1_pqx22")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(23.3333, -1)
-scale = Vector2(0.146736, 0.346408)
 shape = SubResource("RectangleShape2D_2x0wg")
-
-[node name="AttackSprite" type="Sprite2D" parent="."]
-position = Vector2(23.3333, -1)
-scale = Vector2(0.944444, -1.16667)
-texture = ExtResource("2_strsw")

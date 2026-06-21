@@ -5,6 +5,7 @@ const LEVEL_SCENES := [
 	"res://scenes/levels/level.tscn",
 	"res://scenes/levels/level_2.tscn",
 	"res://scenes/levels/level_3.tscn",
+	"res://scenes/levels/level_test.tscn",
 ]
 
 @onready var main_menu = $VBoxContainer
@@ -16,6 +17,7 @@ const LEVEL_SCENES := [
 @onready var level1_button = $LevelSelectContainer/Level1Button
 @onready var level2_button = $LevelSelectContainer/Level2Button
 @onready var level3_button = $LevelSelectContainer/Level3Button
+@onready var level_test_button = $LevelSelectContainer/LevelTestButton
 @onready var back_button = $LevelSelectContainer/BackButton
 
 func _ready():
@@ -32,6 +34,7 @@ func _ready():
 	level1_button.pressed.connect(_on_level_button_pressed.bind(0))
 	level2_button.pressed.connect(_on_level_button_pressed.bind(1))
 	level3_button.pressed.connect(_on_level_button_pressed.bind(2))
+	level_test_button.pressed.connect(_on_level_button_pressed.bind(3))
 	back_button.pressed.connect(_on_back_button_pressed)
 
 func _on_start_button_pressed():

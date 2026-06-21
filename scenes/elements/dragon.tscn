@@ -124,7 +124,7 @@ size = Vector2(72, 116)
 size = Vector2(88, 124)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_claw"]
-size = Vector2(78, 96)
+size = Vector2(59, 96)
 
 [node name="Dragon" type="CharacterBody2D"]
 position = Vector2(228, 432)
@@ -163,6 +163,7 @@ collision_layer = 16
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ClawHitbox"]
+position = Vector2(-9.5, 0)
 shape = SubResource("RectangleShape2D_claw")
 disabled = true
 

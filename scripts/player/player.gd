@@ -82,7 +82,9 @@ var base_attack_damage = 0
 var equipped_slowdown = 0.0
 # Authored offset of the attack area (facing right). Mirrored when facing left.
 var attack_base_position_x = 0.0
-# Authored vertical scale of the attack area, before the size multiplier.
+# Authored horizontal/vertical scale of the attack area, before the size
+# multiplier. The horizontal magnitude is mirrored by facing.
+var attack_base_scale_x = 0.0
 var attack_base_scale_y = 0.0
 
 # Ranged (throwable) weapon state. When a ranged weapon such as a bomb is
@@ -101,6 +103,7 @@ func _ready() -> void:
 	# Remember the attack's resting offset so we can mirror it by facing,
 	# and its authored vertical scale so we can apply the size multiplier.
 	attack_base_position_x = attack_area.position.x
+	attack_base_scale_x = abs(attack_area.scale.x)
 	attack_base_scale_y = attack_area.scale.y
 
 	# Remember the unarmed combat stats so weapons can modify and restore them.
@@ -274,15 +277,20 @@ func _process_dash(delta: float) -> void:
 func update_animation(direction):
 	if direction != 0:
 		animated_sprite.flip_h = (direction == -1)
-	if is_on_floor():
-		if not is_invincible:
-			if direction == 0:
-				animated_sprite.play("idle")
-			else:
-				animated_sprite.play("run")
-		else:
-			# play invincible animation
-			animated_sprite.play("take_damage")
+
+	# Let the one-shot attack animation play out without being overridden.
+	if animated_sprite.animation == "attack" and animated_sprite.is_playing():
+		return
+
+	if not is_on_floor():
+		animated_sprite.play("jump")
+	elif is_invincible:
+		# play invincible (hurt flash) animation
+		animated_sprite.play("take_damage")
+	elif direction == 0:
+		animated_sprite.play("idle")
+	else:
+		animated_sprite.play("run")
 			
 func update_hp_display():
 	# Signal to update the HUD
@@ -472,14 +480,16 @@ func attack() -> void:
 	if is_dead or not _has_melee_equipped():
 		return
 		
-	# Play attack animation if you had one
-	# animated_sprite.play("attack")
-	
+	# Play the attack animation, restarting from the first frame so each swing
+	# shows the full motion even if the previous one hadn't finished.
+	animated_sprite.play("attack")
+	animated_sprite.frame = 0
+
 	# Set direction of attack area based on player facing direction.
 	# Mirror both the horizontal scale AND the offset so that, facing left,
 	# the attack is the mirror image of facing right (blade in front).
 	var facing_direction = 1 if not animated_sprite.flip_h else -1
-	attack_area.scale.x = facing_direction * attack_size
+	attack_area.scale.x = facing_direction * attack_base_scale_x * attack_size
 	attack_area.scale.y = attack_base_scale_y * attack_size
 	attack_area.position.x = attack_base_position_x * facing_direction
 
