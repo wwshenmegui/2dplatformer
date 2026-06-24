@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://clpqswk1d278f"]
 
-[ext_resource type="Script" uid="uid://bja7mv0o4p8m" path="res://scripts/elements/sword.gd" id="1_swrd0"]
+[ext_resource type="Script" uid="uid://bja7mv0o4p8m" path="res://scripts/items/sword.gd" id="1_swrd0"]
 [ext_resource type="Texture2D" uid="uid://dd3msl6f6r5au" path="res://assets/textures/giant_sword.png" id="2_gntsw"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_gntsw"]

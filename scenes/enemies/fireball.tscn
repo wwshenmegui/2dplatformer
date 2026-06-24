@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://btt5dfhovow6v"]
 
-[ext_resource type="Script" uid="uid://j4lgl5a35qta6" path="res://scripts/elements/fireball.gd" id="1_fbl0"]
+[ext_resource type="Script" uid="uid://j4lgl5a35qta6" path="res://scripts/enemies/fireball.gd" id="1_fbl0"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_fbl0"]
 radius = 12.0

@@ -1,8 +1,8 @@
 [gd_scene load_steps=14 format=3 uid="uid://bt1ttd5o3jery"]
 
-[ext_resource type="Script" uid="uid://bmny37mruq6t2" path="res://scripts/elements/dragon.gd" id="1_drg0"]
+[ext_resource type="Script" uid="uid://bmny37mruq6t2" path="res://scripts/enemies/dragon.gd" id="1_drg0"]
 [ext_resource type="Texture2D" uid="uid://oivyb6qifkv8" path="res://assets/textures/dragon.png" id="2_drg0"]
-[ext_resource type="PackedScene" uid="uid://btt5dfhovow6v" path="res://scenes/elements/fireball.tscn" id="3_drg0"]
+[ext_resource type="PackedScene" uid="uid://btt5dfhovow6v" path="res://scenes/enemies/fireball.tscn" id="3_drg0"]
 
 [sub_resource type="Animation" id="Animation_reset"]
 resource_name = "RESET"

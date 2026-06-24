@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://c8chestsc3n1a"]
 
-[ext_resource type="Script" path="res://scripts/elements/chest.gd" id="1_chest"]
+[ext_resource type="Script" path="res://scripts/items/chest.gd" id="1_chest"]
 [ext_resource type="Texture2D" uid="uid://b8chestxk2j3a" path="res://assets/textures/chest.png" id="2_chesttex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_chest"]

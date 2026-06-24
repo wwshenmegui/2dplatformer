@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://choehvm64mfgs"]
 
-[ext_resource type="Script" path="res://scripts/elements/armor.gd" id="1_armor"]
+[ext_resource type="Script" path="res://scripts/items/armor.gd" id="1_armor"]
 [ext_resource type="Texture2D" uid="uid://t8e34kjpynqw" path="res://assets/textures/player/equipments/armors/armors.png" id="2_armor"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_armorhead"]

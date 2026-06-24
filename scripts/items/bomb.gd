@@ -12,7 +12,7 @@ class_name Bomb
 # player.collect_weapon.
 signal collected(weapon_id: String, props: Dictionary)
 
-const THROWN_BOMB = preload("res://scenes/elements/thrown_bomb.tscn")
+const THROWN_BOMB = preload("res://scenes/items/thrown_bomb.tscn")
 
 @export var element: Element.Type = Element.Type.FIRE
 # Damage dealt to an enemy the thrown bomb hits.

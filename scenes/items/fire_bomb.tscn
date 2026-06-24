@@ -1,5 +1,5 @@
 [gd_scene load_steps=2 format=3 uid="uid://b5m1bv6ghkbbe"]
 
-[ext_resource type="PackedScene" uid="uid://bxdvlcny6x4ea" path="res://scenes/elements/bomb.tscn" id="1_base"]
+[ext_resource type="PackedScene" uid="uid://bxdvlcny6x4ea" path="res://scenes/items/bomb.tscn" id="1_base"]
 
 [node name="FireBomb" instance=ExtResource("1_base")]

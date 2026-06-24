@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://dr03rf5isqsnw"]
 
-[ext_resource type="Script" uid="uid://bja7mv0o4p8m" path="res://scripts/elements/sword.gd" id="1_swrd0"]
+[ext_resource type="Script" uid="uid://bja7mv0o4p8m" path="res://scripts/items/sword.gd" id="1_swrd0"]
 [ext_resource type="Texture2D" uid="uid://c0w0n5eey77q5" path="res://assets/textures/straight_sword.png" id="2_strsw"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_strsw"]

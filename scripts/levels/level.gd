@@ -6,7 +6,6 @@ extends Node2D
 
 @onready var respawn_point = $Respawn_Point
 @onready var player = $Player
-@onready var exit = $Exit
 @onready var win_screen = $UILayer/WinScreen
 @onready var lose_screen = $UILayer/LoseScreen
 @onready var deathzone = $Deathzone
@@ -36,8 +35,10 @@ func _ready():
 	# Connect to deathzone signal
 	deathzone.connect("entered_deathzone", _on_deathzone_body_entered)
 		
-	# Connect the exit signal
-	exit.connect("exit_reached", _on_exit_reached)
+	# Connect every exit zone. Each exit carries its own destination scene, so a
+	# level can have multiple (e.g. a left zone back and a right zone forward).
+	for exit in get_tree().get_nodes_in_group("Exit"):
+		exit.connect("exit_reached", _on_exit_reached)
 	
 	# Connect coin signals
 	var coins = get_tree().get_nodes_in_group("Coins")
@@ -79,15 +80,18 @@ func _unhandled_input(event):
 	if event.is_action_pressed("ui_cancel"):
 		toggle_pause()
 
-func _on_exit_reached():
-	if is_final_level:
+func _on_exit_reached(target_level_path: String):
+	# Prefer the exit's own destination; fall back to the level's next_level_path
+	# for older single-exit levels that don't set it per-exit.
+	var dest = target_level_path if target_level_path != "" else next_level_path
+	if dest != "":
+		# Carry the player's progress (HP, coins, inventory) into the destination.
+		GameState.save_player(player)
+		get_tree().change_scene_to_file(dest)
+	elif is_final_level:
 		# Final level cleared — finish the game.
 		win_screen.visible = true
 		get_tree().paused = true
-	elif next_level_path != "":
-		# Carry the player's progress (HP, coins, inventory) into the next level.
-		GameState.save_player(player)
-		get_tree().change_scene_to_file(next_level_path)
 		
 func _on_player_died():
 	lose_screen.visible = true

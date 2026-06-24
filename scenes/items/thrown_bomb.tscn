@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://000fo6wtixfe"]
 
-[ext_resource type="Script" uid="uid://c8thrownbomb0aa" path="res://scripts/elements/thrown_bomb.gd" id="1_tb"]
+[ext_resource type="Script" uid="uid://c8thrownbomb0aa" path="res://scripts/items/thrown_bomb.gd" id="1_tb"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tb"]
 size = Vector2(24, 24)

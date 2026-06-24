@@ -8,7 +8,7 @@ A 2D platformer built with **Godot 4.4** and **GDScript**. Run and edit the proj
 
 ## Running the Game
 
-Open the project in Godot 4.4 and press **F5** to run from the main scene (`scenes/menu.tscn`), or **F6** to run the currently open scene. There are no automated tests.
+Open the project in Godot 4.4 and press **F5** to run from the main scene (`scenes/ui/menu.tscn`), or **F6** to run the currently open scene. There are no automated tests.
 
 ## Input Actions
 
@@ -40,7 +40,7 @@ Layer assignments (important when adding new collision shapes):
 
 Every scene has a paired script in `scripts/` mirroring the `scenes/` folder structure.
 
-### Level orchestration (`scripts/level.gd`)
+### Level orchestration (`scripts/levels/level.gd`)
 
 `level.gd` is the central coordinator. On `_ready` it:
 - Connects `player.player_died` → shows lose screen + pauses
@@ -72,7 +72,7 @@ Pause/inventory state is mutually exclusive: ESC is blocked while the backpack i
 - **Armor** has four body slots tracked in `equipped_armor` (`head`/`chest`/`hand`/`foot`); `toggle_equip_armor` swaps within a slot. `get_total_armor()` sums equipped armor values; `get_total_attack()` reports the equipped melee damage
 - Signals: `inventory_changed`, `item_used(item_id)`, `weapons_changed`, `armor_changed`
 
-### Enemy (`scripts/elements/enemy.gd`)
+### Enemy (`scripts/enemies/enemy.gd`)
 
 Patrols left/right using an `EdgeCheck` RayCast2D to detect ledges and reverses on wall collision. Uses an `Area2D` child to detect player contact and calls `player.take_damage(damage, global_position)` directly.
 
@@ -81,7 +81,7 @@ Patrols left/right using an `EdgeCheck` RayCast2D to detect ledges and reverses 
 - **Collectibles** (`collectible.gd`) — require `E` to pick up; emit `collected(item_id)` → `player.collect_item(item_id)` → `inventory.add_item()`
 - **Coins** (`coin.gd`) — auto-collected on contact; emit `coin_collected(value)` → `player.collect_coins(value)`; tracked separately from inventory on the player (`player.coins`)
 - **Weapons** (`sword.gd`, `bomb.gd`) — group `Weapons`; emit `collected(weapon_id, props)` → `player.collect_weapon`
-- **Armor** (`armor.gd` / `scenes/elements/armor.tscn`) — group `ArmorPickups`; `E` to pick up; emit `collected(armor_id, props)` → `player.collect_armor`; auto-equips if its body slot is empty
+- **Armor** (`armor.gd` / `scenes/items/armor.tscn`) — group `ArmorPickups`; `E` to pick up; emit `collected(armor_id, props)` → `player.collect_armor`; auto-equips if its body slot is empty
 
 ## Roles
 
@@ -103,12 +103,12 @@ Only test what you changed. Identify which scenes or scripts were modified in th
 - Changed the menu (`menu.tscn` / `menu.gd`) → test the menu only.
 
 *Navigating to a level via the menu:*
-1. Run the project with `godot:run_project` (no `scene` parameter so it starts from `scenes/menu.tscn`).
+1. Run the project with `godot:run_project` (no `scene` parameter so it starts from `scenes/ui/menu.tscn`).
 2. Use the `computer` tool to click the **Select Level** button in the menu.
 3. Click the level that corresponds to the scene you changed.
 4. Play through it to verify your change behaves correctly.
 
-Alternatively, if you need to isolate a scene quickly, pass its path directly via the `scene` parameter of `godot:run_project` (e.g. `scenes/level_2.tscn`).
+Alternatively, if you need to isolate a scene quickly, pass its path directly via the `scene` parameter of `godot:run_project` (e.g. `scenes/levels/level_2.tscn`).
 
 *Per-system checklist — apply only the items relevant to what changed:*
 - **Movement** — walk left/right (`A`/`D`), jump (`Space`), dash (`Shift`; only works when `dash_enabled` is on)
