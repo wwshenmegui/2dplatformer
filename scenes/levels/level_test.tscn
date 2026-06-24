@@ -1,10 +1,8 @@
-[gd_scene load_steps=16 format=4 uid="uid://b48tbm61kh6bk"]
+[gd_scene load_steps=14 format=4 uid="uid://b48tbm61kh6bk"]
 
 [ext_resource type="Script" uid="uid://cjcecejywu47c" path="res://scripts/levels/level.gd" id="1_lvl"]
 [ext_resource type="PackedScene" uid="uid://ccpaee58xeetu" path="res://scenes/player/player.tscn" id="2_ply"]
 [ext_resource type="PackedScene" uid="uid://cdgnpg0ld1osn" path="res://scenes/ui/ui_layer.tscn" id="3_ui"]
-[ext_resource type="PackedScene" uid="uid://3xj5s4crgweo" path="res://scenes/levels/exit.tscn" id="4_exit"]
-[ext_resource type="PackedScene" uid="uid://dun2jr5sadvhp" path="res://scenes/levels/deathzone.tscn" id="5_dz"]
 [ext_resource type="PackedScene" uid="uid://bgbkfsnl2hgc1" path="res://scenes/enemies/snail.tscn" id="6_snail"]
 [ext_resource type="PackedScene" uid="uid://dbcjqbxcqs4vv" path="res://scenes/items/coin.tscn" id="7_coin"]
 [ext_resource type="PackedScene" uid="uid://gm15uvrhdn2e" path="res://scenes/items/collectible.tscn" id="8_col"]
@@ -12,7 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://ds048ytfhdedd" path="res://assets/textures/Background/Trees/Background.png" id="10_forest"]
 [ext_resource type="PackedScene" uid="uid://dr03rf5isqsnw" path="res://scenes/items/straight_sword.tscn" id="11_s0ovu"]
 [ext_resource type="PackedScene" uid="uid://cea5nfrmdd7fc" path="res://scenes/enemies/boar.tscn" id="12_boar"]
-[ext_resource type="PackedScene" path="res://scenes/items/chest.tscn" id="13_chest"]
+[ext_resource type="PackedScene" uid="uid://c8chestsc3n1a" path="res://scenes/items/chest.tscn" id="13_chest"]
 
 [sub_resource type="TileSetAtlasSource" id="atlas_terrain"]
 resource_name = "terrain"
@@ -82,7 +80,7 @@ physics_layer_0/collision_layer = 1
 physics_layer_0/collision_mask = 18
 sources/0 = SubResource("atlas_terrain")
 
-[node name="Level" type="Node2D"]
+[node name="Level2" type="Node2D"]
 script = ExtResource("1_lvl")
 is_final_level = true
 
@@ -269,12 +267,6 @@ region_rect = Rect2(306, 310, 28, 26)
 
 [node name="Player" parent="." instance=ExtResource("2_ply")]
 position = Vector2(214, 384)
-
-[node name="Exit" parent="." instance=ExtResource("4_exit")]
-position = Vector2(1365, 186)
-
-[node name="Deathzone" parent="." instance=ExtResource("5_dz")]
-position = Vector2(-1208, -54)
 
 [node name="Respawn_Point" type="Marker2D" parent="."]
 position = Vector2(480, 384)

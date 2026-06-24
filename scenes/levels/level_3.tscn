@@ -3,12 +3,12 @@
 [ext_resource type="Script" uid="uid://cjcecejywu47c" path="res://scripts/levels/level.gd" id="1_d4w6o"]
 [ext_resource type="PackedScene" uid="uid://ccpaee58xeetu" path="res://scenes/player/player.tscn" id="2_mbbpy"]
 [ext_resource type="PackedScene" uid="uid://cdgnpg0ld1osn" path="res://scenes/ui/ui_layer.tscn" id="2_ouxo3"]
-[ext_resource type="PackedScene" uid="uid://3xj5s4crgweo" path="res://scenes/levels/exit.tscn" id="3_ouxo3"]
-[ext_resource type="PackedScene" uid="uid://dun2jr5sadvhp" path="res://scenes/levels/deathzone.tscn" id="5_icy5c"]
+[ext_resource type="PackedScene" uid="uid://0vjdum21rg0q" path="res://scenes/levels/exit.tscn" id="3_ouxo3"]
+[ext_resource type="PackedScene" uid="uid://dwgqk5v34q54q" path="res://scenes/levels/deathzone.tscn" id="5_icy5c"]
 [ext_resource type="Texture2D" uid="uid://ddtaiy2fttal3" path="res://assets/textures/world_tileset.png" id="6_icy5c"]
 [ext_resource type="PackedScene" uid="uid://bt1ttd5o3jery" path="res://scenes/enemies/dragon.tscn" id="8_drg0"]
 [ext_resource type="PackedScene" uid="uid://b5m1bv6ghkbbe" path="res://scenes/items/fire_bomb.tscn" id="9_fbomb"]
-[ext_resource type="PackedScene" path="res://scenes/items/ice_bomb.tscn" id="10_ibomb"]
+[ext_resource type="PackedScene" uid="uid://dqjh5ckagga3x" path="res://scenes/items/ice_bomb.tscn" id="10_ibomb"]
 
 [sub_resource type="TileMapPattern" id="TileMapPattern_ouxo3"]
 tile_data = PackedInt32Array(0, 0, 1, 65536, 0, 1, 1, 0, 1, 65537, 0, 1)
