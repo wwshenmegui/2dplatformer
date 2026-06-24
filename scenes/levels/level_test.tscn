@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=4 uid="uid://b48tbm61kh6bk"]
+[gd_scene load_steps=16 format=4 uid="uid://b48tbm61kh6bk"]
 
 [ext_resource type="Script" uid="uid://cjcecejywu47c" path="res://scripts/level.gd" id="1_lvl"]
 [ext_resource type="PackedScene" uid="uid://ccpaee58xeetu" path="res://scenes/player/player.tscn" id="2_ply"]
@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://ds048ytfhdedd" path="res://assets/textures/Background/Trees/Background.png" id="10_forest"]
 [ext_resource type="PackedScene" uid="uid://dr03rf5isqsnw" path="res://scenes/elements/straight_sword.tscn" id="11_s0ovu"]
 [ext_resource type="PackedScene" uid="uid://cea5nfrmdd7fc" path="res://scenes/elements/boar.tscn" id="12_boar"]
+[ext_resource type="PackedScene" path="res://scenes/elements/chest.tscn" id="13_chest"]
 
 [sub_resource type="TileSetAtlasSource" id="atlas_terrain"]
 resource_name = "terrain"
@@ -304,3 +305,8 @@ position = Vector2(160, 372)
 
 [node name="StraightSword" parent="." instance=ExtResource("11_s0ovu")]
 position = Vector2(271, 376)
+
+[node name="Chests" type="Node" parent="."]
+
+[node name="Chest0" parent="Chests" instance=ExtResource("13_chest")]
+position = Vector2(75, 191)

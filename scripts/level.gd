@@ -49,6 +49,11 @@ func _ready():
 	for collectible in collectibles:
 		collectible.connect("collected", _on_collectible_collected)
 
+	# Connect chest signals
+	var chests = get_tree().get_nodes_in_group("Chests")
+	for chest in chests:
+		chest.connect("chest_opened", _on_chest_opened)
+
 	# Connect weapon pickup signals
 	var weapons = get_tree().get_nodes_in_group("Weapons")
 	for weapon in weapons:
@@ -141,3 +146,7 @@ func _on_armor_collected(armor_id, props):
 # Handle coin collection
 func _on_coin_collected(value):
 	player.collect_coins(value)
+
+# Handle chest opening — rewards the player with the coins inside
+func _on_chest_opened(coin_reward):
+	player.collect_coins(coin_reward)

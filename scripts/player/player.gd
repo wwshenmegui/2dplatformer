@@ -495,7 +495,7 @@ func attack() -> void:
 
 	# Trigger the attack effect
 	attack_area.attack()
-	
+
 	# Start cooldown
 	is_attack_on_cooldown = true
 	await get_tree().create_timer(attack_cooldown).timeout
