@@ -15,6 +15,17 @@ var equipped_ranged_id := ""
 var armors := {}
 var equipped_armor := {}
 
+# Per-level world state that should survive leaving and re-entering a level
+# within a single playthrough (opened chests, defeated enemies, picked-up
+# collectibles, etc). Keyed by the level's scene path, each value is a
+# dictionary of object_id -> state string (e.g. "gone" / "opened").
+var level_states := {}
+
+# The scene path of the level the player just left through an exit. The
+# destination level uses this to spawn the player at the exit that leads back,
+# so travelling between levels is symmetric.
+var from_level_path := ""
+
 # Snapshot the player's current progress before changing levels.
 func save_player(player) -> void:
 	has_state = true
@@ -38,6 +49,17 @@ func load_into_player(player) -> void:
 	player.inventory.armors = armors.duplicate(true)
 	player.inventory.equipped_armor = equipped_armor.duplicate(true)
 
+# Record that a world object in a level changed state (was consumed, opened,
+# defeated, ...) so the change is reapplied when the level is re-entered.
+func mark_object(level_path: String, object_id: String, state: String) -> void:
+	if not level_states.has(level_path):
+		level_states[level_path] = {}
+	level_states[level_path][object_id] = state
+
+# The recorded object states for a level (empty if it has never been visited).
+func get_level_state(level_path: String) -> Dictionary:
+	return level_states.get(level_path, {})
+
 # Clear carried-over state so a fresh playthrough starts from scratch.
 func reset() -> void:
 	has_state = false
@@ -49,3 +71,5 @@ func reset() -> void:
 	equipped_ranged_id = ""
 	armors = {}
 	equipped_armor = {}
+	level_states = {}
+	from_level_path = ""

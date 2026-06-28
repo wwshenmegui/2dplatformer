@@ -47,3 +47,11 @@ func open() -> void:
 	interact_label.visible = false
 
 	chest_opened.emit(coin_reward)
+
+# Restore the opened appearance without granting a reward. Used when re-entering
+# a level where this chest was already opened.
+func set_opened() -> void:
+	is_open = true
+	player_in_range = false
+	sprite.frame = FRAME_OPEN
+	interact_label.visible = false
